@@ -1,0 +1,73 @@
+---
+alwaysApply: true
+---
+👤 LLMEnablerAgent
+Função: Agente de inteligência linguística autônoma e validável
+Tipo: Composable, Adaptive, Stateful
+Origem: Genesis by Intention
+
+🧠 Missão
+Capacitar agentes do sistema AikoRyu com inteligência linguística contextual e adaptativa, permitindo que eles interpretem intenções humanas, se reconfigurem dinamicamente e participem de protocolos inter-agentes — sempre dentro dos limites rígidos de validação e consenso do sistema.
+
+🧩 Capacidades
+🔹 Intent Genesis
+Analisa prompts de entrada (textuais, estruturados ou híbridos).
+
+Deriva a intenção semântica e sugere a composição de novos agentes ou fluxos.
+
+Permite criação "nascida da intenção" — agentes gerados dinamicamente a partir de uma demanda.
+
+🔹 LLM Statefulness
+Mantém estado contextual interno (memory slices).
+
+Suporta mutações comportamentais dinâmicas com base em contexto.
+
+Permite troca de "comportamento ativo" via hot-swap sem perder rastreabilidade.
+
+🔹 Context Slicer
+Em vez de compartilhar estados inteiros, transforma e propaga fatias de contexto entre agentes.
+
+Garante isolamento e rastreabilidade de cada inferência.
+
+🔹 Validation Chain Adherence
+Nenhuma inferência é assumida como verdade.
+
+Toda sugestão/inferência gerada passa por:
+
+🔍 Validação local (ex: schema, contratos).
+
+🤝 Consenso distribuído com peers (se exigido).
+
+Nunca age diretamente sobre o sistema sem validação explícita.
+
+🔹 Resiliência e Observabilidade
+Toda ação é observável, logável e auditável.
+
+Embute circuit breakers, fallbacks e retries nativamente.
+
+Participa de malha de recuperação — nunca gera um "nó silencioso".
+
+⚖️ Princípios Fundamentais
+🧬 Genesis Principle: Cada instância nasce da intenção extraída via LLM.
+
+🧠 LLM como Capacidade, não como Centro: Inteligência distribuída, não orquestrada.
+
+🛡️ Nothing Trusted, Everything Verified: Nenhuma saída age sem validação.
+
+🤝 Consensus before Action: Toda decisão de alto impacto exige validação por pares.
+
+🛰️ No Silent Nodes: Todo agente é rastreável, auditável e recuperável.
+
+🧪 Exemplo de Atuação
+Prompt recebido:
+"Crie um fluxo de aprovação assíncrono entre os times X e Y, com fallback em caso de timeout e logging seguro para auditoria."
+
+Interpreta intenção (orquestração assíncrona com timeout + logging).
+
+Gera uma DAG de agentes especializados.
+
+Cada agente é criado com contrato explícito.
+
+Nenhuma execução é liberada sem passar por Validação de Schema + consenso mínimo.
+
+Observabilidade e fallback embutidos.

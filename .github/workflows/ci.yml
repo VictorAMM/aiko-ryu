@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feat/*, release/*]
+  pull_request:
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run type-check
+
+      - name: Test
+        run: npm test
+
+      - name: Validate README
+        run: npm run readme:analyze

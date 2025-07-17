@@ -1,0 +1,27 @@
+# glob: docs/semantic/ontology.mdc
+
+## Ontologia: AikoRyu Mesh
+
+### Conceitos
+- Agent
+- DAG
+- Snapshot
+- Validation
+- Consensus
+- Capability
+- Intent
+
+### Intents
+- semantic-validation
+- backup-snapshot
+- restore-incremental
+
+### Capabilities
+- validateSemantic
+- createSnapshot
+- restoreSnapshot
+- emitEvent
+description:
+globs:
+alwaysApply: false
+---
