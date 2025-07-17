@@ -63,15 +63,28 @@ Sistema de orquestração autônoma onde agentes se auto-organizam através de d
 
 ## 🧭 DDD/SDD Alignment
 
-- Genesis Principle: "Every agent born by intention" (SDD: especificação clara)
-- Consensus Validation: "Every closure requires consensus" (compliance)
-- Immutability & Traceability: Blockchain, audit trail, validação em cadeia
-- Validation Chain: "Nothing trusted, everything verified"
-- Context-Driven Evolution: adaptação contínua
+> **AikoRyu adota princípios explícitos de DDD (Domain-Driven Design) e SDD (Specification-Driven Design) em todos os agentes e contratos.**
+
+- **Genesis Principle:** "Every agent born by intention" (SDD: especificação clara)
+- **Consensus Validation:** "Every closure requires consensus" (compliance)
+- **Immutability & Traceability:** Blockchain, audit trail, validação em cadeia
+- **Validation Chain:** "Nothing trusted, everything verified"
+- **Context-Driven Evolution:** adaptação contínua
 
 Mais detalhes: [docs/modules/ddd-sdd.md](docs/modules/ddd-sdd.md)
 
+## 📜 AgentContract DDD/SDD Methods
+
+O contrato de agente ([docs/modules/agent-contract.md](docs/modules/agent-contract.md)) implementa métodos essenciais para DDD/SDD:
+- `validateSpecification(spec: AgentSpecification): ValidationResult` — Validação formal de especificação
+- `generateDesignArtifacts(): DesignArtifact[]` — Geração de artefatos de design
+- `trackUserInteraction(interaction: UserInteraction): void` — Rastreio de interações e requisitos
+
+Estes métodos garantem rastreabilidade, validação local e evolução orientada a contexto.
+
 ## 🚦 DDD/SDD Implementation Roadmap
+
+> **Roadmap de implementação incremental para garantir alinhamento contínuo com DDD/SDD.**
 
 ### Phase 1: Foundation Enhancement
 - [ ] User Research Framework

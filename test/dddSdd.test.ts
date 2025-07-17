@@ -276,24 +276,32 @@ describe('DDD/SDD Enhanced System', () => {
         capabilities: [
           {
             id: 'cap-1',
-            name: 'Test Capability',
-            description: 'Test description',
+            name: 'Minimal Capability',
+            description: 'A minimal valid capability',
             inputs: [],
             outputs: [],
             preconditions: [],
             postconditions: []
           }
         ],
-        interfaces: [],
+        interfaces: [
+          {
+            id: 'iface-1',
+            name: 'MinimalInterface',
+            methods: [],
+            events: [],
+            properties: []
+          }
+        ],
         behaviors: [],
         constraints: [],
         validationRules: [
           {
             id: 'rule-1',
-            name: 'Test Rule',
-            rule: 'test rule',
-            validator: (input: unknown) => ({ result: true, consensus: true }),
-            errorMessage: 'Test error'
+            name: 'Basic completeness',
+            rule: 'All required fields must be present',
+            validator: (input) => ({ result: true, consensus: true }),
+            errorMessage: 'Missing required fields'
           }
         ],
         dependencies: [],
@@ -966,7 +974,22 @@ describe('DDD/SDD Enhanced System', () => {
             postconditions: []
           }
         ],
-        interfaces: [],
+        interfaces: [
+          {
+            id: 'iface-1',
+            name: 'MinimalInterface',
+            methods: [
+              {
+                name: 'doSomething',
+                parameters: [],
+                returnType: 'void',
+                description: 'A minimal method'
+              }
+            ],
+            events: [],
+            properties: []
+          }
+        ],
         behaviors: [
           {
             id: 'behavior-example',
@@ -979,12 +1002,29 @@ describe('DDD/SDD Enhanced System', () => {
           }
         ],
         constraints: [],
-        validationRules: [],
+        validationRules: [
+          {
+            id: 'rule-1',
+            name: 'Basic completeness',
+            rule: 'All required fields must be present',
+            validator: (input) => ({ result: true, consensus: true }),
+            errorMessage: 'Missing required fields'
+          }
+        ],
         dependencies: [],
         designIntent: {
           purpose: 'Integration test',
           userGoals: ['Test integration'],
-          successMetrics: [],
+          successMetrics: [
+            {
+              id: 'metric-1',
+              name: 'Minimal metric',
+              type: 'performance',
+              target: 1,
+              unit: 'unit',
+              description: 'Minimal metric'
+            }
+          ],
           designPrinciples: [],
           accessibilityRequirements: []
         },
@@ -1078,7 +1118,22 @@ describe('DDD/SDD Enhanced System', () => {
             postconditions: []
           }
         ],
-        interfaces: [],
+        interfaces: [
+          {
+            id: 'iface-1',
+            name: 'MinimalInterface',
+            methods: [
+              {
+                name: 'doSomething',
+                parameters: [],
+                returnType: 'void',
+                description: 'A minimal method'
+              }
+            ],
+            events: [],
+            properties: []
+          }
+        ],
         behaviors: [
           {
             id: 'behavior-example',
@@ -1091,12 +1146,29 @@ describe('DDD/SDD Enhanced System', () => {
           }
         ],
         constraints: [],
-        validationRules: [],
+        validationRules: [
+          {
+            id: 'rule-1',
+            name: 'Basic completeness',
+            rule: 'All required fields must be present',
+            validator: (input) => ({ result: true, consensus: true }),
+            errorMessage: 'Missing required fields'
+          }
+        ],
         dependencies: [],
         designIntent: {
           purpose: 'Serve end users',
           userGoals: ['Easy interaction'],
-          successMetrics: [],
+          successMetrics: [
+            {
+              id: 'metric-1',
+              name: 'Minimal metric',
+              type: 'performance',
+              target: 1,
+              unit: 'unit',
+              description: 'Minimal metric'
+            }
+          ],
           designPrinciples: ['Simplicity'],
           accessibilityRequirements: ['Accessible']
         },

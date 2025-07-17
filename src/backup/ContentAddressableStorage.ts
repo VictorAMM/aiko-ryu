@@ -4,7 +4,7 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import { ValidationResult } from 'json-schema';
+import { ValidationResult } from '../agents/AgentContract';
 import path from 'path';
 import { TraceEvent } from '../agents/AgentContract';
 
