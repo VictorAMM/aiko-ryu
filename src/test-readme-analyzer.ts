@@ -270,16 +270,22 @@ class ReadmeAnalyzer {
     const readmeContent = fs.readFileSync(this.readmePath, 'utf-8');
     const currentDate = new Date().toISOString().split('T')[0];
     
-    // Check if system reset date needs updating
+    // Check if system reset date needs updating (support both formats)
     const dateValid = this.validDates.some(date => 
-      readmeContent.includes(`System reset on ${date}`)
+      readmeContent.includes(`System reset on ${date}`) ||
+      readmeContent.includes(`Última reinicialização: ${date}`)
     );
     
     if (!dateValid) {
-      // Find and replace the system reset date
-      const updatedContent = readmeContent.replace(
+      // Find and replace the system reset date (support both formats)
+      let updatedContent = readmeContent.replace(
         /System reset on \d{4}-\d{2}-\d{2}/,
         `System reset on ${currentDate}`
+      );
+      
+      updatedContent = updatedContent.replace(
+        /Última reinicialização: \d{4}-\d{2}-\d{2}/,
+        `Última reinicialização: ${currentDate}`
       );
       
       if (updatedContent !== readmeContent) {
@@ -616,9 +622,10 @@ See \`test/\` directory for related test files.
 
     const readmeContent = fs.readFileSync(this.readmePath, 'utf-8');
     
-    // Verify system reset date matches either valid date
+    // Verify system reset date matches either valid date (support both formats)
     const dateValid = this.validDates.some(date => 
-      readmeContent.includes(`System reset on ${date}`)
+      readmeContent.includes(`System reset on ${date}`) ||
+      readmeContent.includes(`Última reinicialização: ${date}`)
     );
     
     if (!dateValid) {
@@ -1046,8 +1053,10 @@ See \`test/\` directory for related test files.
       }
     }
     
-    // Scan for TODO/FIXME and stub methods
-    const files = globSync('src/**/*.ts').concat(globSync('test/**/*.ts'));
+    // Scan for TODO/FIXME and stub methods (exclude analyzer file itself)
+    const files = globSync('src/**/*.ts').concat(globSync('test/**/*.ts'))
+      .filter(file => !file.includes('test-readme-analyzer.ts')); // Exclude self-scanning
+    
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf-8');
       const lines = content.split('\n');

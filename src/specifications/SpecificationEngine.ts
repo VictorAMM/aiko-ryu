@@ -391,6 +391,10 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
     ];
   }
   
+  /**
+   * @todo Implement circular dependency detection for agent specifications.
+   * Currently returns an empty array as a placeholder.
+   */
   private detectCircularDependencies(_specs: AgentSpecification[]): string[] {
     // INTENTIONAL STUB: Will implement circular dependency detection in future
     return [];
@@ -559,26 +563,46 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     return spec.dependencies || [];
   }
   
+  /**
+   * @todo Implement affected agent analysis for specification changes.
+   * Currently returns an empty array as a placeholder.
+   */
   private findAffectedAgents(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement affected agent analysis in future
     return [];
   }
 
+  /**
+   * @todo Implement breaking change detection for specification changes.
+   * Currently returns an empty array as a placeholder.
+   */
   private identifyBreakingChanges(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement breaking change detection in future
     return [];
   }
 
+  /**
+   * @todo Implement severity calculation for specification changes.
+   * Currently returns 'medium' as a placeholder.
+   */
   private calculateSeverity(_change: SpecificationChange): 'low' | 'medium' | 'high' | 'critical' {
     // INTENTIONAL STUB: Will implement severity calculation in future
     return 'medium';
   }
 
+  /**
+   * @todo Implement effort estimation for specification changes.
+   * Currently returns 0 as a placeholder.
+   */
   private estimateEffort(_change: SpecificationChange): number {
     // INTENTIONAL STUB: Will implement effort estimation in future
     return 0;
   }
 
+  /**
+   * @todo Implement approver determination for specification changes.
+   * Currently returns a static list as a placeholder.
+   */
   private determineApprovers(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement approver determination in future
     return ['tech-lead', 'product-owner'];
@@ -593,16 +617,28 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     }));
   }
 
+  /**
+   * @todo Implement timeline calculation for specification changes.
+   * Currently returns 5 days as a placeholder.
+   */
   private calculateTimeline(_change: SpecificationChange): number {
     // INTENTIONAL STUB: Will implement timeline calculation in future
     return 5; // days
   }
 
+  /**
+   * @todo Implement previous version retrieval for specifications.
+   * Currently returns '1.0.0' as a placeholder.
+   */
   private getPreviousVersion(_target: string): string {
     // INTENTIONAL STUB: Will implement previous version retrieval in future
     return '1.0.0';
   }
 
+  /**
+   * @todo Implement rollback steps for specification changes.
+   * Currently returns a static rollback plan as a placeholder.
+   */
   private createRollbackSteps(_change: SpecificationChange): RollbackStep[] {
     // INTENTIONAL STUB: Will implement rollback steps in future
     return [
@@ -621,6 +657,10 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     ];
   }
 
+  /**
+   * @todo Implement validation checks for specification changes.
+   * Currently returns a static list as a placeholder.
+   */
   private createValidationChecks(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement validation checks in future
     return [

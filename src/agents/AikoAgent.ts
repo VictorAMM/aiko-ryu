@@ -82,15 +82,19 @@ export class AikoAgent implements AgentContract {
     });
   }
   
+  /**
+   * @todo Integrate with distributed tracing system (e.g., OpenTelemetry).
+   * Should support span creation, propagation, context injection, and metrics.
+   * This is a scaffold for future observability integration.
+   */
   emitTrace(event: TraceEvent): void {
-    // Connect to tracing system
+    // Connect to tracing system (future: OpenTelemetry integration)
+    // Example scaffold:
+    // const span = tracer.startSpan(event.eventType, { attributes: { agentId: this.id } });
+    // span.addEvent('emitTrace', event);
+    // span.end();
+    // context propagation and metrics would be handled here
     console.log(`[AikoAgent:${this.id}]`, event);
-    
-    // TODO: Integrate with distributed tracing system (e.g., OpenTelemetry)
-    // This would include:
-    // - Span creation and propagation
-    // - Context injection for correlation
-    // - Metrics collection for observability
   }
   
   getStatus(): AgentStatus {
