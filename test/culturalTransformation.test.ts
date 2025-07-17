@@ -1,3 +1,4 @@
+import { AgentSpecification, UserInteraction } from '../src/agents/AgentContract';
 import { CulturalTransformationAgent, DesignThinkingWorkshop, CrossFunctionalTeam, InnovationMetrics, LearningPath } from '../src/design/CulturalTransformation';
 
 describe('CulturalTransformationAgent', () => {
@@ -273,7 +274,7 @@ describe('CulturalTransformationAgent', () => {
 
   describe('DDD/SDD Implementation', () => {
     it('should validate specifications', () => {
-      const spec = {
+      const spec: AgentSpecification = {
         id: 'cultural-transformation-spec',
         role: 'CulturalTransformation',
         capabilities: [
@@ -322,19 +323,19 @@ describe('CulturalTransformationAgent', () => {
         designIntent: {
           purpose: 'Implement organizational culture modeling',
           userGoals: ['Foster innovation culture', 'Enable cross-functional collaboration'],
-          successMetrics: ['Workshop participation', 'Team formation success', 'Learning completion rates'],
+          successMetrics: [],
           designPrinciples: ['User-centered design', 'Continuous improvement', 'Collaborative innovation'],
           accessibilityRequirements: []
         },
         userRequirements: [
-          { id: 'req-1', description: 'Design thinking workshop facilitation', priority: 'high' },
-          { id: 'req-2', description: 'Cross-functional team management', priority: 'high' },
-          { id: 'req-3', description: 'Innovation metrics tracking', priority: 'medium' },
-          { id: 'req-4', description: 'Learning framework management', priority: 'medium' }
+          { id: 'req-1', description: 'Design thinking workshop facilitation', priority: 'high', userStory: 'As a facilitator', acceptanceCriteria: [], persona: 'Workshop Facilitator' },
+          { id: 'req-2', description: 'Cross-functional team management', priority: 'high', userStory: 'As a team lead', acceptanceCriteria: [], persona: 'Team Leader' },
+          { id: 'req-3', description: 'Innovation metrics tracking', priority: 'medium', userStory: 'As a manager', acceptanceCriteria: [], persona: 'Manager' },
+          { id: 'req-4', description: 'Learning framework management', priority: 'medium', userStory: 'As a learner', acceptanceCriteria: [], persona: 'Learner' }
         ]
       };
 
-      const result = agent.validateSpecification(spec as any);
+      const result = agent.validateSpecification(spec);
       expect(result.result).toBe(true);
       expect(result.consensus).toBe(true);
     });
@@ -344,19 +345,29 @@ describe('CulturalTransformationAgent', () => {
       expect(artifacts.length).toBe(4);
       
       const artifactTypes = artifacts.map(a => a.type);
-      expect(artifactTypes).toContain('workshop-template');
-      expect(artifactTypes).toContain('team-formation-guide');
-      expect(artifactTypes).toContain('metrics-dashboard');
-      expect(artifactTypes).toContain('learning-framework');
+      expect(artifactTypes).toContain('specification');
+      expect(artifactTypes).toContain('prototype');
+      
+      // Should have 3 specifications and 1 prototype
+      const specifications = artifacts.filter(a => a.type === 'specification');
+      const prototypes = artifacts.filter(a => a.type === 'prototype');
+      expect(specifications.length).toBe(3);
+      expect(prototypes.length).toBe(1);
     });
 
     it('should track user interactions', () => {
-      const interaction = {
-        type: 'workshop_participation',
+      const interaction: UserInteraction = {
+        id: 'interaction-001',
         userId: 'user-001',
-        workshopId: 'workshop-001',
-        satisfaction: 8.5,
-        feedback: 'Great workshop!'
+        sessionId: 'session-001',
+        action: 'workshop_participation',
+        context: {
+          workshopId: 'workshop-001',
+          satisfaction: 8.5,
+          feedback: 'Great workshop!'
+        },
+        timestamp: new Date(),
+        outcome: 'success'
       };
 
       agent.trackUserInteraction(interaction);

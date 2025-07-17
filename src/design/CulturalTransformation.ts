@@ -1,7 +1,15 @@
 // CulturalTransformation.ts - Implements organizational culture modeling features
 // This module addresses the Cultural Transformation phase requirements
 
-import { AgentContract, ValidationResult, AgentSpecification } from '../agents/AgentContract';
+import { AgentContract, ValidationResult, AgentSpecification, TraceEvent, AgentStatus, DesignArtifact, UserInteraction } from '../agents/AgentContract';
+
+// Cultural Transformation specific interfaces
+export interface CulturalTransformationStatus extends AgentStatus {
+  workshops: number;
+  teams: number;
+  metrics: number;
+  learningFrameworks: number;
+}
 
 export interface DesignThinkingWorkshop {
   id: string;
@@ -173,11 +181,11 @@ export class CulturalTransformationAgent implements AgentContract {
     console.log(`[CulturalTransformationAgent] Shutting down ${this.id}`);
   }
 
-  emitTrace(event: any): void {
+  emitTrace(event: TraceEvent): void {
     console.log(`[CulturalTransformationAgent:${this.id}]`, event);
   }
 
-  getStatus(): any {
+  getStatus(): CulturalTransformationStatus {
     return {
       status: 'ready',
       uptime: Date.now(),
@@ -217,32 +225,44 @@ export class CulturalTransformationAgent implements AgentContract {
     };
   }
 
-  generateDesignArtifacts(): any[] {
+  generateDesignArtifacts(): DesignArtifact[] {
     return [
       {
-        type: 'workshop-template',
-        title: 'Design Thinking Workshop Template',
-        content: this.generateWorkshopTemplate()
+        id: 'workshop-template-001',
+        type: 'specification',
+        content: this.generateWorkshopTemplate(),
+        version: '1.0.0',
+        createdAt: new Date(),
+        validatedBy: ['CulturalTransformationAgent']
       },
       {
-        type: 'team-formation-guide',
-        title: 'Cross-Functional Team Formation Guide',
-        content: this.generateTeamFormationGuide()
+        id: 'team-formation-guide-001',
+        type: 'specification',
+        content: this.generateTeamFormationGuide(),
+        version: '1.0.0',
+        createdAt: new Date(),
+        validatedBy: ['CulturalTransformationAgent']
       },
       {
-        type: 'metrics-dashboard',
-        title: 'Innovation Metrics Dashboard',
-        content: this.generateMetricsDashboard()
+        id: 'metrics-dashboard-001',
+        type: 'prototype',
+        content: this.generateMetricsDashboard(),
+        version: '1.0.0',
+        createdAt: new Date(),
+        validatedBy: ['CulturalTransformationAgent']
       },
       {
-        type: 'learning-framework',
-        title: 'Continuous Learning Framework',
-        content: this.generateLearningFramework()
+        id: 'learning-framework-001',
+        type: 'specification',
+        content: this.generateLearningFramework(),
+        version: '1.0.0',
+        createdAt: new Date(),
+        validatedBy: ['CulturalTransformationAgent']
       }
     ];
   }
 
-  trackUserInteraction(interaction: any): void {
+  trackUserInteraction(interaction: UserInteraction): void {
     // Track user interactions with cultural transformation features
     this.emitTrace({
       timestamp: new Date(),
