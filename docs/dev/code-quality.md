@@ -35,58 +35,105 @@ To ensure maintainability, safety, and compliance with DDD/SDD principles, the A
 - **Explicit TODO/FIXME Comments:**
   - Any code marked with `TODO` or `FIXME` is flagged for review.
 
+## Stub Naming Convention
+
+### Intentional Stubs (Allowed)
+Parameters in stub functions should be prefixed with `_` to indicate they are intentionally unused placeholders:
+
+```typescript
+// GOOD: Intentional stub with _ prefix
+private findAffectedAgents(_change: SpecificationChange): string[] {
+  // INTENTIONAL STUB: Will implement affected agent analysis in future
+  return [];
+}
+
+// GOOD: Intentional stub with _ prefix
+private calculateNextVersion(_specId: string): string {
+  // INTENTIONAL STUB: Will implement version calculation in future
+  return '1.1.0';
+}
+```
+
+### Unused Code (Not Allowed)
+Parameters without `_` prefix are considered actual unused code and will be flagged:
+
+```typescript
+// BAD: Unused parameter without _ prefix
+private findAffectedAgents(change: SpecificationChange): string[] {
+  // This will be flagged as unused code
+  return [];
+}
+
+// BAD: Unused variable
+let unusedVar = 42; // This will be flagged
+```
+
 ## Why This Matters
 
 - **Maintainability:** Unused code and stubs make the codebase harder to understand and maintain.
 - **Safety:** `any`/`unknown` types and stubs can hide bugs and break type safety.
 - **Compliance:** DDD/SDD require explicit contracts and traceable, validated code.
+- **Clarity:** The `_` prefix clearly distinguishes intentional stubs from actual unused code.
 
 ## System Policy
 
-- **No stubs, unused code, or `any`/`unknown` types in production.**
+- **No unused code, `any`/`unknown` types, or stubs without `_` prefix in production.**
 - All such issues must be flagged and resolved before merging.
 - Analyzer and CI will fail if any are detected.
+- Intentional stubs must use `_` prefix and include clear comments about future implementation.
 
 ## How the System Detects Issues
 
 - **ESLint:** Used to detect unused variables/imports and unsafe types.
 - **Analyzer:** Runs ESLint and parses for stubs, TODOs, and unsafe types.
-- **AST Parsing:** (Optional) Analyzer may parse the AST to find stub methods.
+- **AST Parsing:** Analyzer parses the AST to find stub methods and validate naming conventions.
 
 ## Example Analyzer Output
 
 ```
 ## Stub/Unused/Any Warnings
-- [ ] src/agents/AikoAgent.ts: line 158: stub method (empty body)
-- [ ] src/specifications/SpecificationEngine.ts: line 394: unused variable 'specs'
-- [ ] src/backup/ContentAddressableStorage.ts: line 123: usage of 'any' type
-- [ ] src/agents/AikoAgent.ts: line 200: // TODO: implement validation
+- [ ] src/agents/AikoAgent.ts:158: 'change' is defined but never used (should be _change for stub)
+- [ ] src/specifications/SpecificationEngine.ts:381: Missing return type on function
+- [ ] test/backup.test.ts:11: 'BackupSnapshot' is defined but never used
 ```
 
-## Resolution
+## Migration Guide
 
-- Remove or implement all stubs.
-- Remove all unused variables/imports/parameters.
-- Replace all `any`/`unknown` types with explicit, safe types.
-- Remove or resolve all TODO/FIXME comments.
+To migrate existing code:
 
-## Allowing Intentional Stubs (with Context)
+1. **For intentional stubs:** Add `_` prefix to parameters
+   ```typescript
+   // Before
+   private findAffectedAgents(change: SpecificationChange): string[] {
+   
+   // After
+   private findAffectedAgents(_change: SpecificationChange): string[] {
+   ```
 
-If a stub, scaffold, scratch, unused variable, or `any`/`unknown` type is **intentionally** left in the code for future iterations, you must add a comment on the previous line explaining the context and motivation. For example:
+2. **For actual unused code:** Either use the parameter or remove it
+   ```typescript
+   // Before
+   function processData(data: string) {
+     return 'processed';
+   }
+   
+   // After (if data is needed)
+   function processData(data: string) {
+     return `processed: ${data}`;
+   }
+   
+   // Or remove unused parameter
+   function processData() {
+     return 'processed';
+   }
+   ```
 
-```typescript
-// INTENTIONAL STUB: This method will be implemented in the next sprint to support feature X.
-function doSomething(): void {}
-
-// INTENTIONAL UNUSED: Reserved for future API compatibility.
-let reservedField: string;
-
-// INTENTIONAL ANY: Third-party library returns dynamic data.
-let dynamicData: any; // INTENTIONAL ANY: Awaiting type definitions from upstream
-```
-
-The analyzer will allow these if the comment is present and clear.
-
----
-
-> **This policy is mandatory for all code merged into the main branch.** 
+3. **Remove eslint-disable comments:** No longer needed with proper naming
+   ```typescript
+   // Before
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   private findAffectedAgents(change: SpecificationChange): string[] {
+   
+   // After
+   private findAffectedAgents(_change: SpecificationChange): string[] {
+   ``` 

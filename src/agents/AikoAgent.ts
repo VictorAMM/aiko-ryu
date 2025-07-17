@@ -155,7 +155,7 @@ export class AikoAgent implements AgentContract {
         id: 'req-001',
         name: 'Agent ID Required',
         rule: 'Agent must have a unique ID',
-        validator: (input: unknown) => {
+        validator: (input: unknown): ValidationResult => {
           const spec = input as AgentSpecification;
           return {
             result: !!spec.id && spec.id.length > 0,
@@ -169,7 +169,7 @@ export class AikoAgent implements AgentContract {
         id: 'req-002',
         name: 'Role Definition',
         rule: 'Agent must have a defined role',
-        validator: (input: unknown) => {
+        validator: (input: unknown): ValidationResult => {
           const spec = input as AgentSpecification;
           return {
             result: !!spec.role && spec.role.length > 0,
@@ -183,7 +183,7 @@ export class AikoAgent implements AgentContract {
         id: 'req-003',
         name: 'Capabilities Required',
         rule: 'Agent must have at least one capability',
-        validator: (input: unknown) => {
+        validator: (input: unknown): ValidationResult => {
           const spec = input as AgentSpecification;
           return {
             result: spec.capabilities.length > 0,

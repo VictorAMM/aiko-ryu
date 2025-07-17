@@ -378,7 +378,7 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
         id: 'spec-001',
         name: 'Agent Specification Required',
         rule: 'Agent must have a complete specification',
-        validator: (input: unknown) => {
+        validator: (input: unknown): ValidationResult => {
           const spec = input as AgentSpecification;
           return {
             result: !!spec && !!spec.id && !!spec.role,
@@ -391,9 +391,7 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
     ];
   }
   
-  // INTENTIONAL UNUSED: Placeholder for future implementation of batch consistency checks
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private detectCircularDependencies(specs: AgentSpecification[]): string[] {
+  private detectCircularDependencies(_specs: AgentSpecification[]): string[] {
     // INTENTIONAL STUB: Will implement circular dependency detection in future
     return [];
   }
@@ -561,41 +559,31 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     return spec.dependencies || [];
   }
   
-  // INTENTIONAL UNUSED: Placeholder for future affected agent analysis
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private findAffectedAgents(change: SpecificationChange): string[] {
+  private findAffectedAgents(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement affected agent analysis in future
     return [];
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future breaking change detection
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private identifyBreakingChanges(change: SpecificationChange): string[] {
+
+  private identifyBreakingChanges(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement breaking change detection in future
     return [];
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future severity calculation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private calculateSeverity(change: SpecificationChange): 'low' | 'medium' | 'high' | 'critical' {
+
+  private calculateSeverity(_change: SpecificationChange): 'low' | 'medium' | 'high' | 'critical' {
     // INTENTIONAL STUB: Will implement severity calculation in future
     return 'medium';
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future effort estimation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private estimateEffort(change: SpecificationChange): number {
+
+  private estimateEffort(_change: SpecificationChange): number {
     // INTENTIONAL STUB: Will implement effort estimation in future
     return 0;
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future approver determination
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private determineApprovers(change: SpecificationChange): string[] {
+
+  private determineApprovers(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement approver determination in future
     return ['tech-lead', 'product-owner'];
   }
-  
+
   private createApprovalSteps(approvers: string[]): ApprovalStep[] {
     return approvers.map((approver, index) => ({
       step: index + 1,
@@ -604,24 +592,18 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
       status: 'pending'
     }));
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future timeline calculation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private calculateTimeline(change: SpecificationChange): number {
+
+  private calculateTimeline(_change: SpecificationChange): number {
     // INTENTIONAL STUB: Will implement timeline calculation in future
     return 5; // days
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future version retrieval
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private getPreviousVersion(target: string): string {
+
+  private getPreviousVersion(_target: string): string {
     // INTENTIONAL STUB: Will implement previous version retrieval in future
     return '1.0.0';
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future rollback steps
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private createRollbackSteps(change: SpecificationChange): RollbackStep[] {
+
+  private createRollbackSteps(_change: SpecificationChange): RollbackStep[] {
     // INTENTIONAL STUB: Will implement rollback steps in future
     return [
       {
@@ -638,10 +620,8 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
       }
     ];
   }
-  
-  // INTENTIONAL UNUSED: Placeholder for future validation checks
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private createValidationChecks(change: SpecificationChange): string[] {
+
+  private createValidationChecks(_change: SpecificationChange): string[] {
     // INTENTIONAL STUB: Will implement validation checks in future
     return [
       'System health check',
@@ -649,14 +629,14 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
       'Integration test suite'
     ];
   }
-  
-  private estimateDowntime(change: SpecificationChange): number {
+
+  private estimateDowntime(_change: SpecificationChange): number {
     // Implementation for downtime estimation
     return 30; // minutes
   }
   
-  private getChangesForSpec(specId: string): SpecificationChange[] {
-    return this.changeHistory.filter(change => change.target === specId);
+  private getChangesForSpec(_specId: string): SpecificationChange[] {
+    return this.changeHistory.filter(change => change.target === _specId);
   }
   
   private determineCompatibility(changes: SpecificationChange[]): 'backward' | 'breaking' | 'new' {
@@ -664,7 +644,7 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     return hasBreakingChanges ? 'breaking' : 'backward';
   }
   
-  private calculateNextVersion(specId: string): string {
+  private calculateNextVersion(_specId: string): string {
     // Implementation for version calculation
     return '1.1.0';
   }

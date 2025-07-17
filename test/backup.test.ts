@@ -8,7 +8,6 @@ import {
   ContentAddressableStorage,
   DAGNode,
   DAGEdge,
-  BackupSnapshot,
   RegenerationPolicy
 } from '../src/backup/ContentAddressableStorage';
 import path from 'path';

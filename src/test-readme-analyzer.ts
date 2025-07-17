@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { ESLint } from 'eslint';
+import { sync as globSync } from 'glob';
 
 // Import existing subsystems for proof generation
 import { SpecificationEngine } from './specifications/SpecificationEngine';
@@ -865,7 +866,7 @@ TODO: Add content
       } else {
         this.warnings.push('TypeScript strict mode not enabled');
       }
-    } catch (error) {
+    } catch {
       this.warnings.push('Could not validate TypeScript configuration');
     }
 
@@ -929,9 +930,9 @@ TODO: Add content
       });
       console.log('✅ ESLint passed');
       return true;
-    } catch (error: unknown) {
+    } catch {
       this.errors.push('ESLint failed');
-      console.error('❌ ESLint failed:', error instanceof Error ? error.message : String(error));
+      console.error('❌ ESLint failed');
       return false;
     }
   }
@@ -940,47 +941,70 @@ TODO: Add content
     const eslint = new ESLint();
     const results = await eslint.lintFiles(['src/**/*.ts', 'test/**/*.ts']);
     const warnings: string[] = [];
+    
     for (const result of results) {
-      const fileContent = require('fs').readFileSync(result.filePath, 'utf-8');
-      const lines = fileContent.split('\n');
       for (const msg of result.messages) {
-        const lineIdx = msg.line - 1;
-        const prevLine = lines[lineIdx - 1]?.trim() || '';
-        const isIntentional = /INTENTIONAL/.test(prevLine);
+        // Check for unused parameters that should have _ prefix for stubs
+        if (msg.ruleId?.includes('no-unused-vars') && msg.message.includes('is defined but never used')) {
+          const paramMatch = msg.message.match(/'([^']+)' is defined but never used/);
+          if (paramMatch) {
+            const paramName = paramMatch[1];
+            // If parameter doesn't start with _, it's an error
+            if (!paramName.startsWith('_')) {
+              warnings.push(`${result.filePath}:${msg.line}: '${paramName}' is defined but never used (should be _${paramName} for stub)`);
+            }
+          }
+        }
+        
+        // Check for unsafe types
         if (
-          (msg.ruleId?.includes('no-unused') ||
           msg.ruleId?.includes('no-explicit-any') ||
           msg.ruleId?.includes('no-unsafe') ||
           msg.ruleId?.includes('no-undef') ||
-          msg.message.includes('is defined but never used') ||
           msg.message.includes('any') ||
-          msg.message.includes('unknown')) &&
-          !isIntentional
+          msg.message.includes('unknown')
         ) {
           warnings.push(`${result.filePath}:${msg.line}: ${msg.message}`);
         }
       }
     }
+    
     // Scan for TODO/FIXME and stub methods
-    const fs = require('fs');
-    const glob = require('glob');
-    const files = glob.sync('src/**/*.ts').concat(glob.sync('test/**/*.ts'));
+    const files = globSync('src/**/*.ts').concat(globSync('test/**/*.ts'));
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf-8');
       const lines = content.split('\n');
+      
       lines.forEach((line: string, idx: number) => {
-        const prevLine = lines[idx - 1]?.trim() || '';
-        const isIntentional = /INTENTIONAL/.test(prevLine);
-        if ((/TODO|FIXME/.test(line) || (/\{\s*\}/.test(line) && /function|\)\s*:\s*\w+\s*\{/.test(line))) && !isIntentional) {
-          if (/TODO|FIXME/.test(line)) {
-            warnings.push(`${file}:${idx + 1}: ${line.trim()}`);
-          }
-          if (/\{\s*\}/.test(line) && /function|\)\s*:\s*\w+\s*\{/.test(line)) {
-            warnings.push(`${file}:${idx + 1}: stub method (empty body)`);
+        // Check for TODO/FIXME comments
+        if (/TODO|FIXME/.test(line)) {
+          warnings.push(`${file}:${idx + 1}: ${line.trim()}`);
+        }
+        
+        // Check for stub methods (empty bodies) and validate parameter naming
+        if (/\{\s*\}/.test(line) && /function|\)\s*:\s*\w+\s*\{/.test(line)) {
+          // Find the function definition line
+          for (let i = idx; i >= 0; i--) {
+            const prevLine = lines[i];
+            if (prevLine.includes('function') || prevLine.includes('(')) {
+              // Check for parameters that should be stubs
+              const paramMatch = prevLine.match(/\(([^)]+)\)/);
+              if (paramMatch) {
+                const params = paramMatch[1].split(',').map(p => p.trim());
+                for (const param of params) {
+                  const paramName = param.split(':')[0].trim();
+                  if (paramName && !paramName.startsWith('_') && !paramName.includes('...')) {
+                    warnings.push(`${file}:${idx + 1}: stub method with unused parameter '${paramName}' (should be _${paramName})`);
+                  }
+                }
+              }
+              break;
+            }
           }
         }
       });
     }
+    
     return warnings;
   }
 

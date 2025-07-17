@@ -3,15 +3,7 @@ import { AikoAgent } from '../src/agents/AikoAgent';
 import { SpecificationEngine } from '../src/specifications/SpecificationEngine';
 import { DesignSystemManager } from '../src/design/DesignSystem';
 import { 
-  AgentSpecification, 
-  ValidationResult, 
-  DesignIntent, 
-  UserRequirement,
-  Capability,
-  Interface,
-  Behavior,
-  Constraint,
-  ValidationRule
+  AgentSpecification
 } from '../src/agents/AgentContract';
 import {
   UserPersona,
@@ -103,7 +95,7 @@ describe('DDD/SDD Enhanced System', () => {
             id: 'rule-1',
             name: 'Test Rule',
             rule: 'test rule',
-            validator: (input: unknown) => ({ result: true, consensus: true }),
+            validator: () => ({ result: true, consensus: true }),
             errorMessage: 'Test error'
           }
         ],
@@ -144,14 +136,6 @@ describe('DDD/SDD Enhanced System', () => {
     });
 
     it('should generate design artifacts', () => {
-      const designIntent: DesignIntent = {
-        purpose: 'Test purpose',
-        userGoals: ['Goal 1'],
-        successMetrics: [],
-        designPrinciples: ['Principle 1'],
-        accessibilityRequirements: []
-      };
-
       const artifacts = aikoAgent.generateDesignArtifacts();
       expect(Array.isArray(artifacts)).toBe(true);
     });
@@ -300,7 +284,7 @@ describe('DDD/SDD Enhanced System', () => {
             id: 'rule-1',
             name: 'Basic completeness',
             rule: 'All required fields must be present',
-            validator: (input) => ({ result: true, consensus: true }),
+            validator: () => ({ result: true, consensus: true }),
             errorMessage: 'Missing required fields'
           }
         ],
@@ -1007,7 +991,7 @@ describe('DDD/SDD Enhanced System', () => {
             id: 'rule-1',
             name: 'Basic completeness',
             rule: 'All required fields must be present',
-            validator: (input) => ({ result: true, consensus: true }),
+            validator: () => ({ result: true, consensus: true }),
             errorMessage: 'Missing required fields'
           }
         ],
@@ -1151,7 +1135,7 @@ describe('DDD/SDD Enhanced System', () => {
             id: 'rule-1',
             name: 'Basic completeness',
             rule: 'All required fields must be present',
-            validator: (input) => ({ result: true, consensus: true }),
+            validator: () => ({ result: true, consensus: true }),
             errorMessage: 'Missing required fields'
           }
         ],
