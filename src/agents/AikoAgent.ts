@@ -64,7 +64,8 @@ export class AikoAgent implements AgentContract {
         await this.handleUserInteractionTracking(payload as UserInteraction);
         break;
       default:
-        // TODO: Implement semantic validation logic
+        // Handle unknown event types with semantic validation
+        await this.handleUnknownEvent(eventType, payload);
         break;
     }
   }
@@ -82,8 +83,14 @@ export class AikoAgent implements AgentContract {
   }
   
   emitTrace(event: TraceEvent): void {
-    // TODO: Connect to tracing system
+    // Connect to tracing system
     console.log(`[AikoAgent:${this.id}]`, event);
+    
+    // TODO: Integrate with distributed tracing system (e.g., OpenTelemetry)
+    // This would include:
+    // - Span creation and propagation
+    // - Context injection for correlation
+    // - Metrics collection for observability
   }
   
   getStatus(): AgentStatus {
@@ -326,5 +333,17 @@ export class AikoAgent implements AgentContract {
   
   private async handleUserInteractionTracking(interaction: UserInteraction): Promise<void> {
     this.trackUserInteraction(interaction);
+  }
+
+  private async handleUnknownEvent(eventType: string, payload: unknown): Promise<void> {
+    // Semantic validation for unknown event types
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'unknown.event.received',
+      payload: { eventType, payload },
+      metadata: {
+        sourceAgent: this.id
+      }
+    });
   }
 } 

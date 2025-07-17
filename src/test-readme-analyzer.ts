@@ -410,24 +410,53 @@ Agente autônomo para ${name.toLowerCase()} no sistema AikoRyu.
 ## Interface/Contrato
 \`\`\`typescript
 interface ${name}Agent {
-  // TODO: Define interface
+  readonly id: string;
+  readonly role: string;
+  readonly dependencies: string[];
+  
+  initialize(): Promise<void>;
+  handleEvent(eventType: string, payload: unknown): Promise<void>;
+  shutdown(): Promise<void>;
+  getStatus(): AgentStatus;
+  
+  // DDD/SDD Methods
+  validateSpecification(spec: AgentSpecification): ValidationResult;
+  generateDesignArtifacts(): DesignArtifact[];
+  trackUserInteraction(interaction: UserInteraction): void;
 }
 \`\`\`
 
 ## Inputs/Outputs
-- **Inputs**: TODO
-- **Outputs**: TODO
+- **Inputs**: AgentSpecification, DesignIntent, UserInteraction, ValidationRule
+- **Outputs**: ValidationResult, DesignArtifact[], TraceEvent
 
 ## Eventos
-- TODO
+- \`specification.validate\` - Validates agent specifications
+- \`design.artifact.generate\` - Generates design artifacts
+- \`user.interaction.track\` - Tracks user interactions
 
 ## Exemplo de Uso
 \`\`\`typescript
-// TODO: Add usage example
+const ${name.toLowerCase()}Agent = new ${name}Agent('${name.toLowerCase()}-001');
+await ${name.toLowerCase()}Agent.initialize();
+
+// Validate specification
+const spec: AgentSpecification = {
+  id: 'agent-001',
+  role: 'Validator',
+  capabilities: [],
+  interfaces: [],
+  designIntent: { intent: 'validation', context: {} },
+  userRequirements: [],
+  validationRules: []
+};
+
+const result = ${name.toLowerCase()}Agent.validateSpecification(spec);
+console.log('Validation result:', result);
 \`\`\`
 
 ## Falhas Conhecidas
-- TODO
+- None currently identified
 
 ## Testes
 Ver: \`test/${name.toLowerCase()}.test.ts\`
@@ -444,10 +473,14 @@ graph TD
 \`\`\`
 
 ## Passos
-1DO2. TODO3ODO
+1. **Inicialização** - Agent initialization and validation rule setup
+2. **Processamento** - Event handling and specification validation
+3. **Finalização** - Clean shutdown and status reporting
 
 ## Interações Externas
-- TODO
+- SpecificationEngine - For validation rule management
+- AuditTrailAgent - For trace event logging
+- DesignSystem - For artifact generation
 
 ## Exemplo
 Ver: \`docs/examples/\`
@@ -461,36 +494,80 @@ Exemplo prático de ${name.toLowerCase()}.
 
 ## Código
 \`\`\`typescript
-// TODO: Add example code
+// Example: Agent validation workflow
+const agent = new ${name}Agent('${name.toLowerCase()}-001');
+await agent.initialize();
+
+// Validate a specification
+const spec = {
+  id: 'test-agent',
+  role: 'TestRole',
+  capabilities: [{ name: 'test', description: 'Test capability' }],
+  interfaces: [],
+  designIntent: { intent: 'test', context: {} },
+  userRequirements: [],
+  validationRules: []
+};
+
+const result = agent.validateSpecification(spec);
+console.log('Validation successful:', result.result);
 \`\`\`
 
 ## Resultado
-TODO
+- Specification validation with detailed error reporting
+- Design artifact generation for valid specifications
+- User interaction tracking for audit purposes
 
 ## Testes Relacionados
-TODO
+- \`test/${name.toLowerCase()}.test.ts\` - Unit tests for ${name}Agent
+- \`test/dddSdd.test.ts\` - DDD/SDD integration tests
 `;
 
       case 'semantic':
         return `# ${name} Ontology
 
 ## Conceitos
-TODO: Define core concepts
+- **Agent**: Autonomous entity with defined capabilities and interfaces
+- **Specification**: Formal definition of agent behavior and requirements
+- **Validation**: Process of verifying specification compliance
+- **Design Intent**: Purpose and context of agent creation
+- **User Requirements**: Functional and non-functional requirements
 
 ## Relacionamentos
-TODO: Define relationships
+- Agent ↔ Specification: Agents are defined by specifications
+- Specification ↔ Validation: Specifications must pass validation rules
+- Design Intent ↔ User Requirements: Intent drives requirement definition
+- Agent ↔ Agent: Agents can depend on other agents
 
 ## Regras
-TODO: Define business rules
+- Every agent must have a unique ID and defined role
+- Specifications must be complete and semantically valid
+- Validation results require consensus from multiple agents
+- Design artifacts must align with user requirements
 
 ## Validação
-TODO: Define validation rules
+- Syntax validation: Check required fields and structure
+- Semantic validation: Verify meaning and relationships
+- Completeness validation: Ensure all components are present
+- User requirement validation: Align with stakeholder needs
 `;
 
       default:
         return `# ${name}
 
-TODO: Add content
+## Propósito
+Generic documentation template for ${name} component.
+
+## Funcionalidades
+- Basic component functionality
+- Integration with AikoRyu mesh system
+- DDD/SDD compliance
+
+## Uso
+Refer to specific component documentation for detailed usage instructions.
+
+## Testes
+See \`test/\` directory for related test files.
 `;
     }
   }
@@ -565,22 +642,22 @@ TODO: Add content
   }
 
   validateDDDSDDContent(readmeContent: string): void {
-    // Check for DDD/SDD alignment section
-    if (!readmeContent.includes('## 🎨 DDD/SDD Alignment')) {
+    // Check for DDD/SDD alignment section (using the actual emoji and text)
+    if (!readmeContent.includes('## 🧭 DDD/SDD Alignment')) {
       this.warnings.push('DDD/SDD Alignment section missing from README');
     }
 
-    // Check for implementation roadmap
-    if (!readmeContent.includes('### 🎯 Implementation Roadmap')) {
+    // Check for implementation roadmap (using the actual emoji and text)
+    if (!readmeContent.includes('## 🚦 DDD/SDD Implementation Roadmap')) {
       this.warnings.push('DDD/SDD Implementation Roadmap missing from README');
     }
 
-    // Check for agent role DDD/SDD alignment
+    // Check for agent role DDD/SDD alignment (this one is correct)
     if (!readmeContent.includes('DDD/SDD Alignment')) {
       this.warnings.push('Agent roles table missing DDD/SDD alignment column');
     }
 
-    // Check for enhanced agent contract
+    // Check for enhanced agent contract (this one is correct)
     if (!readmeContent.includes('validateSpecification')) {
       this.warnings.push('Enhanced AgentContract with DDD/SDD methods not documented');
     }
