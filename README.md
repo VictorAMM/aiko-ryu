@@ -110,6 +110,13 @@ Estes métodos garantem rastreabilidade, validação local e evolução orientad
 - [ ] Innovation Metrics Implementation
 - [ ] Continuous Learning Framework
 
+### Phase 5: LLM Consistency & Memory Optimization
+- [ ] Deterministic Replay System
+- [ ] State Reconstruction with Verification
+- [ ] Hybrid Critical/Non-Critical Paths
+- [ ] Memory-Efficient Audit Trails
+- [ ] Consistency Verification Framework
+
 ## 🚀 Quick Start
 
 ```bash
@@ -159,6 +166,8 @@ npm run analyze
 - **Modelo Híbrido DAG x Event Graph**
 - **Protocolos de Negociação Inter-Agentes**
 - **DAG Diffing** para rollback & versioning
+- **LLM Consistency Management** (deterministic replay, state verification)
+- **Memory Optimization** (Williams-inspired time-space tradeoffs)
 
 ## 🛠️ Comandos Úteis
 

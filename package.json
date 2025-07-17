@@ -9,7 +9,8 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "build": "tsc",
-    "analyze": "node build/test-readme-analyzer.js"
+    "analyze": "node build/test-readme-analyzer.js",
+    "lint": "eslint src/**/*.ts"
   },
   "keywords": [],
   "author": "",
