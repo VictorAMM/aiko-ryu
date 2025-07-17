@@ -1,10 +1,6 @@
 // src/design/DesignSystem.ts
 import { 
-  DesignArtifact, 
-  UserInteraction, 
-  DesignIntent, 
-  UserRequirement,
-  ValidationResult,
+  ValidationResult, 
   Metric,
   ValidationRule
 } from '../agents/AgentContract';

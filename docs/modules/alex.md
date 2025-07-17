@@ -32,3 +32,6 @@ if (result.status === 'completed') {
 - DAG inválido
 - Deadlock de dependências
 - Falha de execução de nó 
+
+## Testes Relacionados
+- [../../test/basic.test.ts](../../test/basic.test.ts) 

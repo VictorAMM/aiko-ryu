@@ -9,10 +9,6 @@ import {
   UserInteraction,
   DesignIntent,
   UserRequirement,
-  Capability,
-  Interface,
-  Behavior,
-  Constraint,
   ValidationRule
 } from './AgentContract';
 

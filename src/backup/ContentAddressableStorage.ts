@@ -2,10 +2,11 @@
 // Content-Addressable Storage + Metadata DAG for DAG-based backup system
 // Aligned with Aiko & Ryu principles: immutability, traceability, consensus
 
-import { AgentContract, TraceEvent, ValidationResult } from '../agents/AgentContract';
 import crypto from 'crypto';
 import fs from 'fs';
+import { ValidationResult } from 'json-schema';
 import path from 'path';
+import { TraceEvent } from '../agents/AgentContract';
 
 // Core CAS interfaces aligned with DDD/SDD principles
 export interface ContentAddressableStorage {

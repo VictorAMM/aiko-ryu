@@ -30,3 +30,6 @@ if (result.confidence > 0.8) {
 ## Falhas Conhecidas
 - Fonte não encontrada
 - Baixa confiança 
+
+## Testes Relacionados
+- [../../test/basic.test.ts](../../test/basic.test.ts) 

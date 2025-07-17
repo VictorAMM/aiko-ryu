@@ -31,3 +31,6 @@ if (result.validation.result) {
 ## Falhas Conhecidas
 - Contexto inconsistente
 - Perda de histórico 
+
+## Testes Relacionados
+- [../../test/basic.test.ts](../../test/basic.test.ts) 

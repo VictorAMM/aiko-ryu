@@ -11,23 +11,22 @@ import {
   BackupSnapshot,
   RegenerationPolicy
 } from '../src/backup/ContentAddressableStorage';
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs';
 
 describe('AikoRyu Backup System', () => {
   let cas: ContentAddressableStorage;
   let dag: RyuMetadataDAG;
   let backupManager: AikoRyuBackupManager;
-  let testStoragePath: string;
+  const testStoragePath = path.resolve('../.test-backups');
 
-  beforeEach(() => {
-    testStoragePath = path.join(__dirname, '../.test-backups');
+  beforeEach((): void => {
     cas = new AikoCAS(testStoragePath);
     dag = new RyuMetadataDAG(path.join(testStoragePath, 'metadata'));
     backupManager = new AikoRyuBackupManager(testStoragePath);
   });
 
-  afterEach(async () => {
+  afterEach(async (): Promise<void> => {
     // Clean up test storage
     if (fs.existsSync(testStoragePath)) {
       fs.rmSync(testStoragePath, { recursive: true, force: true });
@@ -35,7 +34,7 @@ describe('AikoRyu Backup System', () => {
   });
 
   describe('Content-Addressable Storage (AikoCAS)', () => {
-    it('should store and retrieve content with hash-based addressing', async () => {
+    it('should store and retrieve content with hash-based addressing', async (): Promise<void> => {
       const testContent = { agentId: 'aiko-1', status: 'ready', data: 'test-data' };
       
       // Store content
@@ -51,7 +50,7 @@ describe('AikoRyu Backup System', () => {
       expect(retrievedContent).toEqual(testContent);
     });
 
-    it('should handle metadata with content storage', async () => {
+    it('should handle metadata with content storage', async (): Promise<void> => {
       const testContent = { role: 'SemanticValidator', capabilities: ['validation'] };
       const metadata = { 
         agentRole: 'SemanticValidator',
@@ -66,7 +65,7 @@ describe('AikoRyu Backup System', () => {
       expect(retrieved).toEqual(testContent);
     });
 
-    it('should list all stored content hashes', async () => {
+    it('should list all stored content hashes', async (): Promise<void> => {
       const content1 = { id: 'agent-1', status: 'ready' };
       const content2 = { id: 'agent-2', status: 'computing' };
       
@@ -78,7 +77,7 @@ describe('AikoRyu Backup System', () => {
       expect(hashes.every(hash => hash.endsWith('.json'))).toBe(true);
     });
 
-    it('should delete content by hash', async () => {
+    it('should delete content by hash', async (): Promise<void> => {
       const testContent = { id: 'test-agent', status: 'ready' };
       const hash = await cas.store(testContent);
       
@@ -89,7 +88,7 @@ describe('AikoRyu Backup System', () => {
       expect(cas.exists(hash)).toBe(false);
     });
 
-    it('should handle duplicate content with same hash', async () => {
+    it('should handle duplicate content with same hash', async (): Promise<void> => {
       const testContent = { id: 'duplicate-test', data: 'same-content' };
       
       const hash1 = await cas.store(testContent);
@@ -101,7 +100,7 @@ describe('AikoRyu Backup System', () => {
   });
 
   describe('Metadata DAG (RyuMetadataDAG)', () => {
-    it('should create snapshots with DAG metadata', async () => {
+    it('should create snapshots with DAG metadata', async (): Promise<void> => {
       const nodes: Record<string, DAGNode> = {
         'agent-aiko': {
           id: 'agent-aiko',
@@ -162,7 +161,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshot.immutable).toBe(true);
     });
 
-    it('should validate consensus for DAG snapshots', async () => {
+    it('should validate consensus for DAG snapshots', async (): Promise<void> => {
       const validNodes: Record<string, DAGNode> = {
         'node-1': {
           id: 'node-1',
@@ -191,7 +190,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshot.metadataDAG.consensus).toBe(true);
     });
 
-    it('should list all snapshots', async () => {
+    it('should list all snapshots', async (): Promise<void> => {
       const nodes: Record<string, DAGNode> = {
         'test-node': {
           id: 'test-node',
@@ -222,7 +221,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshots.every(s => s.description.startsWith('Snapshot'))).toBe(true);
     });
 
-    it('should restore snapshots with incremental policy', async () => {
+    it('should restore snapshots with incremental policy', async (): Promise<void> => {
       const nodes: Record<string, DAGNode> = {
         'restore-test': {
           id: 'restore-test',
@@ -262,7 +261,7 @@ describe('AikoRyu Backup System', () => {
       expect(result.details?.restoredNodes).toContain('restore-test');
     });
 
-    it('should handle missing snapshots gracefully', async () => {
+    it('should handle missing snapshots gracefully', async (): Promise<void> => {
       const result = await dag.restoreSnapshot('non-existent-snapshot', cas);
       
       expect(result.result).toBe(false);
@@ -270,7 +269,7 @@ describe('AikoRyu Backup System', () => {
       expect(result.reason).toContain('Snapshot not found');
     });
 
-    it('should perform garbage collection', async () => {
+    it('should perform garbage collection', async (): Promise<void> => {
       const nodes: Record<string, DAGNode> = {
         'gc-test': {
           id: 'gc-test',
@@ -333,7 +332,7 @@ describe('AikoRyu Backup System', () => {
   });
 
   describe('Backup Manager (AikoRyuBackupManager)', () => {
-    it('should create and manage snapshots through the manager', async () => {
+    it('should create and manage snapshots through the manager', async (): Promise<void> => {
       const snapshot = await backupManager.createSnapshot('Test backup', ['test', 'backup']);
       
       expect(snapshot.id).toBeDefined();
@@ -343,7 +342,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshot.immutable).toBe(true);
     });
 
-    it('should restore snapshots through the manager', async () => {
+    it('should restore snapshots through the manager', async (): Promise<void> => {
       const snapshot = await backupManager.createSnapshot('Restore test');
       
       const policy: RegenerationPolicy = {
@@ -360,7 +359,7 @@ describe('AikoRyu Backup System', () => {
       expect(result.consensus).toBe(true);
     });
 
-    it('should list snapshots through the manager', async () => {
+    it('should list snapshots through the manager', async (): Promise<void> => {
       await backupManager.createSnapshot('Snapshot 1');
       await backupManager.createSnapshot('Snapshot 2');
       
@@ -368,7 +367,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshots.length).toBe(2);
     });
 
-    it('should delete snapshots through the manager', async () => {
+    it('should delete snapshots through the manager', async (): Promise<void> => {
       const snapshot = await backupManager.createSnapshot('Delete test');
       
       const deleted = await backupManager.deleteSnapshot(snapshot.id);
@@ -378,7 +377,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshots.length).toBe(1); // Should still exist because immutable
     });
 
-    it('should perform garbage collection through the manager', async () => {
+    it('should perform garbage collection through the manager', async (): Promise<void> => {
       // Create multiple snapshots, some immutable and some not
       for (let i = 0; i < 15; i++) {
         const isImmutable = i < 5; // First 5 snapshots are immutable, rest are not
@@ -400,7 +399,7 @@ describe('AikoRyu Backup System', () => {
   });
 
   describe('DDD/SDD Alignment', () => {
-    it('should maintain traceability and auditability', async () => {
+    it('should maintain traceability and auditability', async (): Promise<void> => {
       const testContent = { 
         agentId: 'aiko-1', 
         role: 'SemanticValidator',
@@ -415,7 +414,7 @@ describe('AikoRyu Backup System', () => {
       expect(retrieved).toEqual(testContent);
     });
 
-    it('should validate specifications during backup', async () => {
+    it('should validate specifications during backup', async (): Promise<void> => {
       const nodes: Record<string, DAGNode> = {
         'spec-validator': {
           id: 'spec-validator',
@@ -447,7 +446,7 @@ describe('AikoRyu Backup System', () => {
       expect(snapshot.metadataDAG.validatedBy).toContain('RyuMetadataDAG');
     });
 
-    it('should support incremental regeneration with dependency awareness', async () => {
+    it('should support incremental regeneration with dependency awareness', async (): Promise<void> => {
       const baseNode: DAGNode = {
         id: 'base-node',
         hash: await cas.store({ data: 'base-data' }),

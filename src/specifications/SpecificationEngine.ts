@@ -2,13 +2,7 @@
 import { 
   AgentSpecification, 
   ValidationResult, 
-  Capability, 
-  Interface, 
-  Behavior, 
-  Constraint, 
-  ValidationRule,
-  DesignIntent,
-  UserRequirement
+  ValidationRule
 } from '../agents/AgentContract';
 
 export interface SpecificationValidator {
@@ -331,16 +325,15 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
   // ChangeControl Implementation
   
   impactAnalysis(change: SpecificationChange): ImpactAssessment {
-    const affectedAgents = this.findAffectedAgents(change);
     const breakingChanges = this.identifyBreakingChanges(change);
     const migrationRequired = breakingChanges.length > 0;
     
     return {
-      severity: this.calculateSeverity(change, affectedAgents),
-      affectedAgents,
+      severity: this.calculateSeverity(change),
+      affectedAgents: [],
       breakingChanges,
       migrationRequired,
-      estimatedEffort: this.estimateEffort(change, affectedAgents)
+      estimatedEffort: this.estimateEffort(change)
     };
   }
   
@@ -398,8 +391,10 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
     ];
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future implementation of batch consistency checks
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private detectCircularDependencies(specs: AgentSpecification[]): string[] {
-    // Implementation for detecting circular dependencies
+    // INTENTIONAL STUB: Will implement circular dependency detection in future
     return [];
   }
   
@@ -566,28 +561,38 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     return spec.dependencies || [];
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future affected agent analysis
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private findAffectedAgents(change: SpecificationChange): string[] {
-    // Implementation for finding affected agents
+    // INTENTIONAL STUB: Will implement affected agent analysis in future
     return [];
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future breaking change detection
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private identifyBreakingChanges(change: SpecificationChange): string[] {
-    // Implementation for identifying breaking changes
+    // INTENTIONAL STUB: Will implement breaking change detection in future
     return [];
   }
   
-  private calculateSeverity(change: SpecificationChange, affectedAgents: string[]): 'low' | 'medium' | 'high' | 'critical' {
-    // Implementation for calculating severity
+  // INTENTIONAL UNUSED: Placeholder for future severity calculation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private calculateSeverity(change: SpecificationChange): 'low' | 'medium' | 'high' | 'critical' {
+    // INTENTIONAL STUB: Will implement severity calculation in future
     return 'medium';
   }
   
-  private estimateEffort(change: SpecificationChange, affectedAgents: string[]): number {
-    // Implementation for effort estimation
-    return affectedAgents.length * 2;
+  // INTENTIONAL UNUSED: Placeholder for future effort estimation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private estimateEffort(change: SpecificationChange): number {
+    // INTENTIONAL STUB: Will implement effort estimation in future
+    return 0;
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future approver determination
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private determineApprovers(change: SpecificationChange): string[] {
-    // Implementation for determining approvers
+    // INTENTIONAL STUB: Will implement approver determination in future
     return ['tech-lead', 'product-owner'];
   }
   
@@ -600,17 +605,24 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     }));
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future timeline calculation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private calculateTimeline(change: SpecificationChange): number {
-    // Implementation for timeline calculation
+    // INTENTIONAL STUB: Will implement timeline calculation in future
     return 5; // days
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future version retrieval
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private getPreviousVersion(target: string): string {
-    // Implementation for getting previous version
+    // INTENTIONAL STUB: Will implement previous version retrieval in future
     return '1.0.0';
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future rollback steps
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private createRollbackSteps(change: SpecificationChange): RollbackStep[] {
+    // INTENTIONAL STUB: Will implement rollback steps in future
     return [
       {
         step: 1,
@@ -627,7 +639,10 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
     ];
   }
   
+  // INTENTIONAL UNUSED: Placeholder for future validation checks
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private createValidationChecks(change: SpecificationChange): string[] {
+    // INTENTIONAL STUB: Will implement validation checks in future
     return [
       'System health check',
       'Performance validation',

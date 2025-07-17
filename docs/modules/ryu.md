@@ -30,3 +30,6 @@ if (result.result) {
 ## Falhas Conhecidas
 - Output fora do contrato
 - Falha de consenso 
+
+## Testes Relacionados
+- [../../test/basic.test.ts](../../test/basic.test.ts) 

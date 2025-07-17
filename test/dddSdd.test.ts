@@ -85,7 +85,8 @@ describe('DDD/SDD Enhanced System', () => {
               }
             ],
             conditions: [],
-            outcomes: []
+            outcomes: [],
+            description: 'Test behavior'
           }
         ],
         constraints: [
@@ -246,7 +247,7 @@ describe('DDD/SDD Enhanced System', () => {
               }
             ],
             conditions: [],
-            outcomes: []
+            outcomes: [],
           }
         ],
         constraints: [],
@@ -974,7 +975,7 @@ describe('DDD/SDD Enhanced System', () => {
             trigger: { type: 'event', value: 'example.event', description: 'Example trigger' },
             actions: [],
             conditions: [],
-            outcomes: []
+            outcomes: [],
           }
         ],
         constraints: [],
@@ -1086,7 +1087,7 @@ describe('DDD/SDD Enhanced System', () => {
             trigger: { type: 'event', value: 'example.event', description: 'Example trigger' },
             actions: [],
             conditions: [],
-            outcomes: []
+            outcomes: [],
           }
         ],
         constraints: [],

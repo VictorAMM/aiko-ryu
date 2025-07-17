@@ -3,12 +3,13 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { ESLint } from 'eslint';
 
 // Import existing subsystems for proof generation
 import { SpecificationEngine } from './specifications/SpecificationEngine';
 import { AikoAgent } from './agents/AikoAgent';
 import { AuditTrailAgent } from './agents/AuditTrailAgent';
-import { AgentSpecification, ValidationResult, DesignArtifact } from './agents/AgentContract';
+import { AgentSpecification, ValidationResult } from './agents/AgentContract';
 
 // Core validation functions with auto-fix capabilities
 class ReadmeAnalyzer {
@@ -247,14 +248,14 @@ class ReadmeAnalyzer {
   }
 
   // Backup and restore functionality
-  backupReadme() {
+  backupReadme(): void {
     if (fs.existsSync(this.readmePath)) {
       fs.copyFileSync(this.readmePath, this.backupPath);
       console.log('📦 README backed up to README.backup.md');
     }
   }
 
-  restoreReadme() {
+  restoreReadme(): void {
     if (fs.existsSync(this.backupPath)) {
       fs.copyFileSync(this.backupPath, this.readmePath);
       console.log('🔄 README restored from backup');
@@ -262,7 +263,7 @@ class ReadmeAnalyzer {
   }
 
   // Auto-fix methods
-  autoFixSystemResetDate() {
+  autoFixSystemResetDate(): boolean {
     if (!fs.existsSync(this.readmePath)) return false;
     
     const readmeContent = fs.readFileSync(this.readmePath, 'utf-8');
@@ -289,7 +290,7 @@ class ReadmeAnalyzer {
     return false;
   }
 
-  autoFixProgressCheckboxes() {
+  autoFixProgressCheckboxes(): boolean {
     if (!fs.existsSync(this.readmePath)) return false;
     
     const readmeContent = fs.readFileSync(this.readmePath, 'utf-8');
@@ -304,7 +305,7 @@ class ReadmeAnalyzer {
     return false;
   }
 
-  autoFixProgressPercentages() {
+  autoFixProgressPercentages(): boolean {
     if (!fs.existsSync(this.readmePath)) return false;
     
     const readmeContent = fs.readFileSync(this.readmePath, 'utf-8');
@@ -334,7 +335,7 @@ class ReadmeAnalyzer {
     return false;
   }
 
-  autoCreateMissingDocs() {
+  autoCreateMissingDocs(): boolean {
     const missingDocs = this.getMissingDocumentation();
     let created = 0;
 
@@ -361,7 +362,7 @@ class ReadmeAnalyzer {
     return false;
   }
 
-  getMissingDocumentation() {
+  getMissingDocumentation(): { path: string, type: string, name: string }[] {
     const requiredDocs = [
       { path: 'docs/overview.md', type: 'overview', name: 'Overview' },
       { path: 'docs/modules/aiko.md', type: 'module', name: 'Aiko' },
@@ -493,7 +494,7 @@ TODO: Add content
     }
   }
 
-  validateProjectStructure() {
+  validateProjectStructure(): void {
     const requiredFiles = [
       'package.json',
       'tsconfig.json',
@@ -529,7 +530,7 @@ TODO: Add content
     this.validateDocumentationStructure();
   }
 
-  validateReadmeClaims() {
+  validateReadmeClaims(): void {
     if (!fs.existsSync(this.readmePath)) {
       this.errors.push('README.md file missing');
       return;
@@ -562,7 +563,7 @@ TODO: Add content
     this.validateDDDSDDContent(readmeContent);
   }
 
-  validateDDDSDDContent(readmeContent: string) {
+  validateDDDSDDContent(readmeContent: string): void {
     // Check for DDD/SDD alignment section
     if (!readmeContent.includes('## 🎨 DDD/SDD Alignment')) {
       this.warnings.push('DDD/SDD Alignment section missing from README');
@@ -584,7 +585,7 @@ TODO: Add content
     }
   }
 
-  validateDocumentationStructure() {
+  validateDocumentationStructure(): void {
     console.log('\n📚 Documentation Structure Validation:');
     
     // Required documentation files
@@ -635,7 +636,7 @@ TODO: Add content
     this.validateDocumentationContent();
   }
 
-  validateDocumentationContent() {
+  validateDocumentationContent(): void {
     console.log('\n🔍 Documentation Content Validation:');
     
     // Check module documentation quality
@@ -768,7 +769,7 @@ TODO: Add content
     });
   }
 
-  assessDDDSDDProgress() {
+  assessDDDSDDProgress(): void {
     console.log('\n📊 DDD/SDD Progress Assessment:');
     
     // Foundation Phase
@@ -853,7 +854,7 @@ TODO: Add content
     }
   }
 
-  validateCodeQuality() {
+  validateCodeQuality(): void {
     console.log('\n🔍 Code Quality Validation:');
     
     // Check for TypeScript strict mode
@@ -884,7 +885,7 @@ TODO: Add content
     }
   }
 
-  async runTypeCheck() {
+  async runTypeCheck(): Promise<boolean> {
     try {
       console.log('🔍 Running TypeScript type check...');
       execSync('npx tsc --noEmit', { 
@@ -901,7 +902,7 @@ TODO: Add content
     }
   }
 
-  async runTests() {
+  async runTests(): Promise<boolean> {
     try {
       console.log('🧪 Running tests...');
       execSync('npm test', { 
@@ -918,7 +919,7 @@ TODO: Add content
     }
   }
 
-  async runLinting() {
+  async runLinting(): Promise<boolean> {
     try {
       console.log('🔍 Running ESLint...');
       execSync('npx eslint src/ test/ --ext .ts', { 
@@ -935,7 +936,55 @@ TODO: Add content
     }
   }
 
-  generateProgressReport() {
+  async checkStubUnusedAnyWarnings(): Promise<string[]> {
+    const eslint = new ESLint();
+    const results = await eslint.lintFiles(['src/**/*.ts', 'test/**/*.ts']);
+    const warnings: string[] = [];
+    for (const result of results) {
+      const fileContent = require('fs').readFileSync(result.filePath, 'utf-8');
+      const lines = fileContent.split('\n');
+      for (const msg of result.messages) {
+        const lineIdx = msg.line - 1;
+        const prevLine = lines[lineIdx - 1]?.trim() || '';
+        const isIntentional = /INTENTIONAL/.test(prevLine);
+        if (
+          (msg.ruleId?.includes('no-unused') ||
+          msg.ruleId?.includes('no-explicit-any') ||
+          msg.ruleId?.includes('no-unsafe') ||
+          msg.ruleId?.includes('no-undef') ||
+          msg.message.includes('is defined but never used') ||
+          msg.message.includes('any') ||
+          msg.message.includes('unknown')) &&
+          !isIntentional
+        ) {
+          warnings.push(`${result.filePath}:${msg.line}: ${msg.message}`);
+        }
+      }
+    }
+    // Scan for TODO/FIXME and stub methods
+    const fs = require('fs');
+    const glob = require('glob');
+    const files = glob.sync('src/**/*.ts').concat(glob.sync('test/**/*.ts'));
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf-8');
+      const lines = content.split('\n');
+      lines.forEach((line: string, idx: number) => {
+        const prevLine = lines[idx - 1]?.trim() || '';
+        const isIntentional = /INTENTIONAL/.test(prevLine);
+        if ((/TODO|FIXME/.test(line) || (/\{\s*\}/.test(line) && /function|\)\s*:\s*\w+\s*\{/.test(line))) && !isIntentional) {
+          if (/TODO|FIXME/.test(line)) {
+            warnings.push(`${file}:${idx + 1}: ${line.trim()}`);
+          }
+          if (/\{\s*\}/.test(line) && /function|\)\s*:\s*\w+\s*\{/.test(line)) {
+            warnings.push(`${file}:${idx + 1}: stub method (empty body)`);
+          }
+        }
+      });
+    }
+    return warnings;
+  }
+
+  generateProgressReport(): void {
     console.log('\n📈 Progress Report:');
     console.log('==================');
     
@@ -962,7 +1011,7 @@ TODO: Add content
     }
   }
 
-  async run() {
+  async run(): Promise<boolean> {
     console.log('\n🔍 Running README Analyzer with DDD/SDD Progress Tracking and Auto-Fix...\n');
     
     // Load previous progress state
@@ -1018,6 +1067,13 @@ TODO: Add content
       console.log('\n💡 To disable auto-fix, use: new ReadmeAnalyzer(false).run()');
     }
     
+    const stubUnusedAnyWarnings = await this.checkStubUnusedAnyWarnings();
+    if (stubUnusedAnyWarnings.length > 0) {
+      console.log('\n## Stub/Unused/Any Warnings');
+      stubUnusedAnyWarnings.forEach(w => console.log('- [ ]', w));
+      this.errors.push('Stub/Unused/Any warnings found. See above.');
+    }
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       console.log('\n✅ All README claims, DDD/SDD progress, and code quality checks validated successfully');
       console.log('✔ Project structure matches requirements');
@@ -1036,9 +1092,9 @@ TODO: Add content
     
     if (this.errors.length > 0) {
       console.error('\n❌ Validation Failed:');
-      this.errors.forEach(err => console.error(`- ${err}`));
-      console.log('\nℹ Please correct the above issues before proceeding');
-      return false;
+    this.errors.forEach(err => console.error(`- ${err}`));
+    console.log('\nℹ Please correct the above issues before proceeding');
+    return false;
     }
     
     return true;

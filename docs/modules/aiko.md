@@ -30,3 +30,6 @@ if (result.result) {
 ## Falhas Conhecidas
 - Dados fora do contrato
 - Falha de consenso 
+
+## Testes Relacionados
+- [../../test/aikoAgent.test.ts](../../test/aikoAgent.test.ts) 
