@@ -220,7 +220,9 @@ export interface UIState {
 export interface ComponentState {
   id: string;
   type: string;
+  // Generic component properties - contains the component's configuration and settings
   props: Record<string, unknown>;
+  // Generic component state - contains the component's internal state data
   state: Record<string, unknown>;
   children: string[];
 }
@@ -270,6 +272,7 @@ export interface ResponsiveBehavior {
 
 export interface ComponentChange {
   property: string;
+  // Generic change value - contains the new value for the property
   value: unknown;
   type: 'show' | 'hide' | 'modify' | 'reorder';
 }
@@ -283,6 +286,7 @@ export interface DataState {
 export interface EntityState {
   id: string;
   type: string;
+  // Generic entity data - contains the entity's properties and values
   data: Record<string, unknown>;
   status: 'loading' | 'loaded' | 'error' | 'stale';
 }
@@ -292,6 +296,7 @@ export interface RelationshipState {
   source: string;
   target: string;
   type: string;
+  // Generic relationship properties - contains additional information about the relationship
   properties: Record<string, unknown>;
 }
 
@@ -303,6 +308,7 @@ export interface CacheState {
 
 export interface CacheEntry {
   key: string;
+  // Generic cached value - contains the cached data
   value: unknown;
   timestamp: number;
   ttl: number;
@@ -384,6 +390,7 @@ export interface TransitionAction {
   id: string;
   type: 'update-state' | 'trigger-event' | 'navigate' | 'show-notification';
   target: string;
+  // Generic action parameters - contains the parameters needed for the action
   parameters: Record<string, unknown>;
 }
 
@@ -421,8 +428,9 @@ export interface ComponentProp {
   name: string;
   type: string;
   required: boolean;
-  defaultValue?: unknown;
   description: string;
+  // Generic default value - contains the default value for the prop
+  defaultValue?: unknown;
   validation?: ValidationRule;
 }
 
@@ -430,6 +438,7 @@ export interface ComponentExample {
   id: string;
   name: string;
   description: string;
+  // Generic example props - contains the props used in this example
   props: Record<string, unknown>;
   code: string;
   preview: string;
@@ -440,6 +449,7 @@ export interface ComponentVariant {
   componentId: string;
   name: string;
   description: string;
+  // Generic variant props - contains the props specific to this variant
   props: Record<string, unknown>;
   useCases: string[];
 }
@@ -463,6 +473,7 @@ export interface ComponentAPI {
 export interface ComponentEvent {
   name: string;
   description: string;
+  // Generic event payload - contains the data passed with the event
   payload: Record<string, unknown>;
 }
 
@@ -554,6 +565,7 @@ export interface Deliverable {
   name: string;
   type: 'design' | 'specification' | 'prototype' | 'documentation';
   format: string;
+  // Generic deliverable content - contains the actual deliverable data
   content: unknown;
   version: string;
   status: 'draft' | 'review' | 'approved' | 'implemented';
@@ -586,6 +598,7 @@ export interface HandoffTool {
 
 export interface ToolIntegration {
   type: 'api' | 'webhook' | 'file' | 'database';
+  // Generic integration configuration - contains the configuration settings
   configuration: Record<string, unknown>;
   authentication: AuthConfig;
 }

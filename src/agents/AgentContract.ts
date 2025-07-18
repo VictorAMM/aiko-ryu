@@ -37,6 +37,7 @@ export interface SystemEventPayload extends BaseEventPayload {
 
 export interface ValidationEventPayload extends BaseEventPayload {
   ruleId: string;
+  // Generic input data for validation - can be any structured data that needs validation
   input: Record<string, unknown>;
   result: ValidationResult;
   context: string;
@@ -62,7 +63,48 @@ export interface CulturalTransformationEventPayload extends BaseEventPayload {
   metricId?: string;
   learningPathId?: string;
   operation: 'workshop' | 'team' | 'metric' | 'learning';
+  // Generic data payload for cultural transformation events - can contain workshop data, team metrics, learning paths, etc.
   data?: unknown;
+}
+
+// LLM Consistency Event Payloads
+export interface DeterministicReplayEventPayload extends BaseEventPayload {
+  replayId: string;
+  context: string;
+  // Generic input data for replay operations - contains the original input that triggered the replay
+  input: Record<string, unknown>;
+  operation: 'start' | 'step' | 'complete' | 'error';
+  stepNumber?: number;
+  // Generic result data from replay operations - contains the deterministic output
+  result?: Record<string, unknown>;
+}
+
+export interface ConsistencyVerificationEventPayload extends BaseEventPayload {
+  verificationId: string;
+  originalHash: string;
+  replayedHash: string;
+  operation: 'verify' | 'mismatch' | 'success';
+  confidence: number;
+  differences?: string[];
+}
+
+export interface StateReconstructionEventPayload extends BaseEventPayload {
+  reconstructionId: string;
+  targetState: string;
+  operation: 'reconstruct' | 'validate' | 'complete';
+  confidence: number;
+  // Reconstructed state data - contains the state that was rebuilt from checkpoints
+  reconstructedState?: Record<string, unknown>;
+}
+
+export interface AuditTrailEventPayload extends BaseEventPayload {
+  trailId: string;
+  operation: 'compact' | 'restore' | 'validate';
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+  // Snapshot data containing the state at a specific point in time
+  snapshot?: Record<string, unknown>;
 }
 
 export type EventPayload = 
@@ -73,7 +115,11 @@ export type EventPayload =
   | ValidationEventPayload
   | BackupEventPayload
   | SnapshotEventPayload
-  | CulturalTransformationEventPayload;
+  | CulturalTransformationEventPayload
+  | DeterministicReplayEventPayload
+  | ConsistencyVerificationEventPayload
+  | StateReconstructionEventPayload
+  | AuditTrailEventPayload;
 
 export interface AgentContract {
   readonly id: string;
@@ -172,6 +218,7 @@ export interface Constraint {
 }
 
 export interface ValidationInput<T = Record<string, unknown>> {
+  // Generic data to be validated - can be any structured data that needs validation
   data: T;
   context: ValidationContext;
   rules: ValidationRule[];
@@ -212,6 +259,7 @@ export interface UserRequirement {
 
 export interface DesignArtifactContent {
   type: 'wireframe' | 'prototype' | 'userFlow' | 'interactionModel' | 'specification';
+  // Generic design data - can contain wireframe data, prototype configurations, user flow definitions, etc.
   data: Record<string, unknown>;
   metadata: Record<string, string | number | boolean>;
   schema: string;

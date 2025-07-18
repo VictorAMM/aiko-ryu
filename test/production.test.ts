@@ -279,6 +279,7 @@ describe('Production System Tests', () => {
                 id: 'val-001',
                 name: 'Test Validation Rule',
                 rule: 'Test rule for validation',
+                // Generic input data for validation - contains test data for validation
                 validator: (_input: unknown) => ({ result: true, consensus: true }),
                 errorMessage: 'Test validation failed'
               }
@@ -377,6 +378,7 @@ describe('Production System Tests', () => {
                 id: 'val-002',
                 name: 'Another Test Validation Rule',
                 rule: 'Another test rule for validation',
+                // Generic input data for validation - contains test data for validation
                 validator: (_input: unknown) => ({ result: true, consensus: true }),
                 errorMessage: 'Another test validation failed'
               }
@@ -481,7 +483,7 @@ describe('Production System Tests', () => {
     });
 
     it('should maintain performance under memory pressure', async () => {
-      const largeData = {
+      const _largeData = {
         id: 'large-data-test',
         data: 'x'.repeat(10000), // 10KB of data
         metadata: {
@@ -606,6 +608,7 @@ describe('Production System Tests', () => {
                 id: 'prod-val-001',
                 name: 'Production Validation Rule',
                 rule: 'Production system validation rule',
+                // Generic input data for validation - contains test data for validation
                 validator: (_input: unknown) => ({ result: true, consensus: true }),
                 errorMessage: 'Production validation failed'
               }

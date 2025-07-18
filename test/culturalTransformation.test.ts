@@ -1,4 +1,4 @@
-import { AgentSpecification, UserInteraction } from '../src/agents/AgentContract';
+import { AgentSpecification, UserInteraction, CulturalTransformationEventPayload } from '../src/agents/AgentContract';
 import { CulturalTransformationAgent, DesignThinkingWorkshop, CrossFunctionalTeam, InnovationMetrics, LearningPath } from '../src/design/CulturalTransformation';
 
 describe('CulturalTransformationAgent', () => {
@@ -552,14 +552,15 @@ describe('CulturalTransformationAgent', () => {
     });
 
     it('should handle unknown events gracefully', async () => {
-      await agent.initialize();
-      
+      // Test unknown event handling with generic payload
       await agent.handleEvent('unknown.event', {
-        operation: 'workshop',
         timestamp: new Date(),
         correlationId: 'unknown-event',
-        sourceAgent: agent.id
-      });
+        sourceAgent: agent.id,
+        operation: 'workshop',
+        workshopId: 'unknown-workshop'
+      } as CulturalTransformationEventPayload);
+      
       // Should not throw error and should log unknown event
     });
   });

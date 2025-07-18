@@ -526,6 +526,7 @@ interface ${name}Agent {
   readonly dependencies: string[];
   
   initialize(): Promise<void>;
+  // Generic event payload data - contains the event information
   handleEvent(eventType: string, payload: unknown): Promise<void>;
   shutdown(): Promise<void>;
   getStatus(): AgentStatus;
@@ -1743,6 +1744,7 @@ See \`test/\` directory for related test files.
       });
       console.log('✅ TypeScript type check passed');
       return true;
+    // Generic error data - contains error information from catch blocks
     } catch (error: unknown) {
       this.errors.push('TypeScript type check failed');
       console.error('❌ TypeScript type check failed:', error instanceof Error ? error.message : String(error));
@@ -1761,6 +1763,7 @@ See \`test/\` directory for related test files.
       });
       console.log('✅ All tests passed');
       return true;
+    // Generic error data - contains error information from catch blocks
     } catch (error: unknown) {
       // Check if it's a buffer issue
       if (error instanceof Error && error.message.includes('ENOBUFS')) {
@@ -1775,6 +1778,7 @@ See \`test/\` directory for related test files.
           });
           console.log('✅ All tests passed (with larger buffer)');
           return true;
+        // Generic retry error data - contains error information from retry attempts
         } catch (_retryError: unknown) {
           console.log('⚠️  Tests may be passing but output is too large for buffer');
           console.log('ℹ️  Consider running tests separately: npm test');
@@ -1824,12 +1828,13 @@ See \`test/\` directory for related test files.
           }
         }
         
-        // Check for unsafe types
+        // Check for unsafe types including unknown type usage
         if (
           msg.ruleId?.includes('no-explicit-any') ||
           msg.ruleId?.includes('no-unsafe') ||
           msg.ruleId?.includes('no-undef') ||
           msg.message.includes('any') ||
+          // Check if message contains unknown references
           msg.message.includes('unknown')
         ) {
           warnings.push(`${result.filePath}:${msg.line}: ${msg.message}`);

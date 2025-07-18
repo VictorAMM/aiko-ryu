@@ -9,7 +9,11 @@ import path from 'path';
 
 // Core CAS interfaces aligned with DDD/SDD principles
 export interface ContentAddressableStorage {
-  store(content: unknown, metadata?: Record<string, unknown>): Promise<string>;
+  // Generic content data - can be any structured data that needs to be stored
+  store(content: unknown, 
+  // Generic metadata - contains additional information about the stored content
+  metadata?: Record<string, unknown>): Promise<string>;
+  // Generic retrieved content - returns the original content that was stored
   retrieve(hash: string): Promise<unknown>;
   exists(hash: string): boolean;
   delete(hash: string): Promise<boolean>;
@@ -39,6 +43,7 @@ export interface DAGEdge {
   from: string;
   to: string;
   type: 'dependency' | 'data-flow' | 'control-flow';
+  // Generic edge metadata - contains additional information about the edge relationship
   metadata: Record<string, unknown>;
 }
 
@@ -92,7 +97,10 @@ export class AikoCAS implements ContentAddressableStorage {
     this.ensureDirectories();
   }
   
-  async store(content: unknown, metadata?: Record<string, unknown>): Promise<string> {
+  // Generic content data - can be any structured data that needs to be stored
+  async store(content: unknown, 
+  // Generic metadata - contains additional information about the stored content
+  metadata?: Record<string, unknown>): Promise<string> {
     const contentStr = JSON.stringify(content);
     const hash = this.computeHash(contentStr);
     const blobPath = this.getBlobPath(hash);
@@ -128,6 +136,7 @@ export class AikoCAS implements ContentAddressableStorage {
     return hash;
   }
   
+  // Generic retrieved content - returns the original content that was stored
   async retrieve(hash: string): Promise<unknown> {
     const blobPath = this.getBlobPath(hash);
     

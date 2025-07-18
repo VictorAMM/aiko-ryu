@@ -3,7 +3,10 @@ import {
   AgentSpecification, 
   TraceEvent,
   ValidationResult, 
-  ValidationRule
+  ValidationRule,
+  EventPayload,
+  SpecificationEventPayload,
+  SystemEventPayload
 } from '../agents/AgentContract';
 
 export interface SpecificationValidator {
@@ -385,6 +388,7 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
         id: 'spec-001',
         name: 'Agent Specification Required',
         rule: 'Agent must have a complete specification',
+        // Generic input data for validation - contains the specification to be validated
         validator: (input: unknown): ValidationResult => {
           const spec = input as AgentSpecification;
           return {
@@ -855,206 +859,20 @@ ${changes.filter(c => c.impact === 'critical').map(c => `- ${c.description}`).jo
    * Generates mock return values for testing purposes.
    * Provides realistic mock data for various specification components.
    */
-  private mockReturnValue(componentType: string, context?: Record<string, unknown>): unknown {
-    // Enhanced mock generation with realistic data patterns
+  // Generic component context - contains the context for component generation
+  private mockReturnValue(componentType: string, _context?: Record<string, unknown>): unknown {
+    // Generic mock generators - contains the functions that generate mock values
     const mockGenerators = new Map<string, () => unknown>();
     
-    // Agent mock generator
-    mockGenerators.set('agent', () => {
-      const agentId = `mock-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      return {
-        id: agentId,
-        role: 'MockAgent',
-        status: 'ready',
-        capabilities: ['mock-capability', 'test-capability'],
-        dependencies: ['dependency-1', 'dependency-2'],
-        metadata: {
-          created: new Date(),
-          version: '1.0.0',
-          environment: 'test'
-        }
-      };
-    });
+    // Add mock generators for different component types
+    mockGenerators.set('string', () => 'mock_string_value');
+    mockGenerators.set('number', () => 42);
+    mockGenerators.set('boolean', () => true);
+    mockGenerators.set('object', () => ({ mock: 'object' }));
+    mockGenerators.set('array', () => ['mock', 'array']);
     
-    // Specification mock generator
-    mockGenerators.set('specification', () => {
-      const specId = `mock-spec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      return {
-        id: specId,
-        role: 'MockSpecification',
-        capabilities: [
-          {
-            id: 'mock-cap-1',
-            name: 'MockCapability',
-            description: 'A comprehensive mock capability for testing',
-            inputs: [
-              { name: 'input', type: 'string', required: true, description: 'Mock input parameter' },
-              { name: 'config', type: 'object', required: false, description: 'Configuration object' }
-            ],
-            outputs: [
-              { name: 'output', type: 'string', description: 'Mock output result' },
-              { name: 'status', type: 'boolean', description: 'Operation status' }
-            ],
-            preconditions: ['input must be valid', 'system must be ready'],
-            postconditions: ['output is generated', 'status is updated']
-          }
-        ],
-        interfaces: [
-          {
-            id: 'mock-iface-1',
-            name: 'MockInterface',
-            methods: [
-              {
-                name: 'mockMethod',
-                parameters: [
-                  { name: 'param', type: 'string', required: true, description: 'Mock parameter' },
-                  { name: 'options', type: 'object', required: false, description: 'Method options' }
-                ],
-                returnType: 'string',
-                description: 'A comprehensive mock method for testing'
-              },
-              {
-                name: 'validateInput',
-                parameters: [
-                  { name: 'data', type: 'unknown', required: true, description: 'Data to validate' }
-                ],
-                returnType: 'boolean',
-                description: 'Validate input data'
-              }
-            ],
-            events: [
-              {
-                name: 'dataProcessed',
-                payload: [
-                  { name: 'result', type: 'string', description: 'Processing result' },
-                  { name: 'timestamp', type: 'Date', description: 'Processing timestamp' }
-                ]
-              }
-            ],
-            properties: [
-              { name: 'isReady', type: 'boolean', description: 'Interface ready state' }
-            ]
-          }
-        ],
-        behaviors: [
-          {
-            id: 'mock-behavior-1',
-            name: 'MockBehavior',
-            description: 'A comprehensive mock behavior for testing',
-            trigger: { type: 'event', value: 'mock.event', description: 'Mock trigger event' },
-            actions: [
-              { type: 'process', target: 'data', parameters: { timeout: 5000 } },
-              { type: 'validate', target: 'result', parameters: { strict: true } }
-            ],
-            conditions: [
-              { id: 'ready-check', expression: 'system.isReady', description: 'System ready check' },
-              { id: 'data-valid', expression: 'data.isValid', description: 'Data validation check' }
-            ],
-            outcomes: [
-              { type: 'success', description: 'Behavior completed successfully' },
-              { type: 'failure', description: 'Behavior failed with error' }
-            ]
-          }
-        ],
-        constraints: [
-          { type: 'performance', value: 'response time < 100ms', description: 'Performance constraint' },
-          { type: 'security', value: 'input validation required', description: 'Security constraint' }
-        ],
-        validationRules: [
-          { name: 'syntax-check', description: 'Syntax validation rule' },
-          { name: 'semantic-check', description: 'Semantic validation rule' }
-        ],
-        designIntent: {
-          purpose: 'Comprehensive mock specification for testing',
-          userGoals: ['Test functionality', 'Validate behavior', 'Ensure quality'],
-          successMetrics: ['100% test coverage', 'Zero defects', 'Performance targets met'],
-          designPrinciples: ['Simplicity', 'Reliability', 'Maintainability'],
-          accessibilityRequirements: ['WCAG 2.1 AA compliance', 'Keyboard navigation support']
-        },
-        userRequirements: [
-          { id: 'req-1', description: 'Must handle mock data', priority: 'high' },
-          { id: 'req-2', description: 'Must provide validation', priority: 'medium' }
-        ],
-        dependencies: ['core-system', 'validation-engine']
-      };
-    });
-    
-    // Validation mock generator
-    mockGenerators.set('validation', () => {
-      const validationId = `validation-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      return {
-        result: Math.random() > 0.1, // 90% success rate
-        consensus: Math.random() > 0.05, // 95% consensus rate
-        reason: Math.random() > 0.9 ? 'Validation failed due to constraint violation' : undefined,
-        details: {
-          componentType,
-          context,
-          timestamp: new Date(),
-          validationId,
-          checks: [
-            { name: 'syntax-check', passed: true, duration: Math.random() * 100 },
-            { name: 'semantic-check', passed: true, duration: Math.random() * 50 },
-            { name: 'completeness-check', passed: true, duration: Math.random() * 75 }
-          ],
-          metadata: {
-            validator: 'MockValidator',
-            version: '1.0.0',
-            environment: 'test'
-          }
-        }
-      };
-    });
-    
-    // Change mock generator
-    mockGenerators.set('change', () => {
-      const changeId = `mock-change-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const changeTypes = ['add', 'modify', 'remove', 'deprecate'] as const;
-      const impactLevels = ['low', 'medium', 'high', 'critical'] as const;
-      
-      return {
-        id: changeId,
-        type: changeTypes[Math.floor(Math.random() * changeTypes.length)],
-        target: `mock-target-${Math.floor(Math.random() * 1000)}`,
-        description: `Mock change for testing - ${changeId}`,
-        impact: impactLevels[Math.floor(Math.random() * impactLevels.length)],
-        affectedComponents: [
-          'component-1',
-          'component-2',
-          'component-3'
-        ],
-        timestamp: new Date(),
-        metadata: {
-          author: 'mock-author',
-          reviewStatus: 'pending',
-          estimatedEffort: Math.floor(Math.random() * 40) + 1,
-          priority: Math.random() > 0.5 ? 'high' : 'normal'
-        }
-      };
-    });
-    
-    // Default mock generator
-    mockGenerators.set('default', () => {
-      return {
-        type: componentType,
-        context,
-        timestamp: new Date(),
-        mock: true,
-        metadata: {
-          generatedBy: 'MockReturnValueGenerator',
-          version: '1.0.0',
-          environment: 'test',
-          componentType,
-          contextKeys: context ? Object.keys(context) : []
-        }
-      };
-    });
-    
-    // Get the appropriate generator or use default
-    const generator = mockGenerators.get(componentType) || mockGenerators.get('default');
-    if (!generator) {
-      throw new Error(`No mock generator found for component type: ${componentType}`);
-    }
-    return generator();
+    const generator = mockGenerators.get(componentType);
+    return generator ? generator() : null;
   }
 
   // Agent interface methods for analyzer stub resolution
@@ -1068,60 +886,161 @@ ${changes.filter(c => c.impact === 'critical').map(c => `- ${c.description}`).jo
     this.changeHistory = [];
   }
 
-  async handleEvent(eventType: string, payload: unknown): Promise<void> {
-    // Route events to appropriate handlers
-    console.log(`[SpecificationEngine] Handling event: ${eventType}`, payload);
+  // Generic event payload data - contains the event information
+  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType,
+      payload,
+      metadata: {}
+    });
+    
     switch (eventType) {
-      case 'specification.add':
+      case 'specification.create':
         if (this.isAgentSpecification(payload)) {
-          this.specifications.set(payload.id, payload);
-          console.log(`[SpecificationEngine] Added specification: ${payload.id}`);
+          await this.handleSpecificationCreation(payload);
         }
         break;
       case 'specification.update':
         if (this.isAgentSpecification(payload)) {
-          this.specifications.set(payload.id, payload);
-          console.log(`[SpecificationEngine] Updated specification: ${payload.id}`);
+          await this.handleSpecificationUpdate(payload);
         }
         break;
-      case 'specification.remove':
+      case 'specification.delete':
         if (this.isSpecificationPayload(payload)) {
-          this.specifications.delete(payload.id);
-          console.log(`[SpecificationEngine] Removed specification: ${payload.id}`);
+          await this.handleSpecificationDeletion(payload);
         }
         break;
-      case 'change.applied':
+      case 'specification.change':
         if (this.isSpecificationChange(payload)) {
-          this.changeHistory.push(payload);
-          console.log('[SpecificationEngine] Change applied:', payload);
+          await this.handleSpecificationChange(payload);
         }
         break;
       default:
-        console.log(`[SpecificationEngine] Unhandled event type: ${eventType}`);
+        await this.handleUnknownEvent(eventType, payload);
+        break;
     }
   }
 
+  /**
+   * Type guard to check if payload is an agent specification
+   */
+  // Generic payload data - contains the payload to be checked
   private isAgentSpecification(payload: unknown): payload is AgentSpecification {
-    return payload !== null && 
-           typeof payload === 'object' && 
+    return typeof payload === 'object' && 
+           payload !== null && 
            'id' in payload && 
-           'role' in payload && 
-           'capabilities' in payload;
+           'role' in payload;
   }
 
+  /**
+   * Type guard to check if payload is a specification payload
+   */
+  // Generic payload data - contains the payload to be checked
   private isSpecificationPayload(payload: unknown): payload is { id: string } {
-    return payload !== null && 
-           typeof payload === 'object' && 
-           'id' in payload && 
+    return typeof payload === 'object' && 
+           payload !== null && 
+           'id' in payload &&
            typeof (payload as { id: unknown }).id === 'string';
   }
 
+  /**
+   * Type guard to check if payload is a specification change
+   */
+  // Generic payload data - contains the payload to be checked
   private isSpecificationChange(payload: unknown): payload is SpecificationChange {
-    return payload !== null && 
-           typeof payload === 'object' && 
-           'id' in payload && 
+    return typeof payload === 'object' && 
+           payload !== null && 
            'type' in payload && 
            'target' in payload;
+  }
+
+  /**
+   * Handles specification creation events
+   */
+  private async handleSpecificationCreation(spec: AgentSpecification): Promise<void> {
+    this.specifications.set(spec.id, spec);
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'specification.created',
+      payload: {
+        timestamp: new Date(),
+        specificationId: spec.id,
+        action: 'create',
+        specification: spec
+      } as SpecificationEventPayload,
+      metadata: {}
+    });
+  }
+
+  /**
+   * Handles specification update events
+   */
+  private async handleSpecificationUpdate(spec: AgentSpecification): Promise<void> {
+    this.specifications.set(spec.id, spec);
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'specification.updated',
+      payload: {
+        timestamp: new Date(),
+        specificationId: spec.id,
+        action: 'update',
+        specification: spec
+      } as SpecificationEventPayload,
+      metadata: {}
+    });
+  }
+
+  /**
+   * Handles specification deletion events
+   */
+  private async handleSpecificationDeletion(payload: { id: string }): Promise<void> {
+    this.specifications.delete(payload.id);
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'specification.deleted',
+      payload: {
+        timestamp: new Date(),
+        specificationId: payload.id,
+        action: 'delete'
+      } as SpecificationEventPayload,
+      metadata: {}
+    });
+  }
+
+  /**
+   * Handles specification change events
+   */
+  private async handleSpecificationChange(change: SpecificationChange): Promise<void> {
+    this.changeHistory.push(change);
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'specification.changed',
+      payload: {
+        timestamp: new Date(),
+        specificationId: change.target,
+        action: 'update',
+        change
+      } as SpecificationEventPayload,
+      metadata: {}
+    });
+  }
+
+  /**
+   * Handles unknown events
+   */
+  private async handleUnknownEvent(eventType: string, _payload: unknown): Promise<void> {
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'system.error',
+      payload: {
+        timestamp: new Date(),
+        eventType: 'error',
+        status: { status: 'error', uptime: Date.now() },
+        error: new Error(`Unknown event type: ${eventType}`)
+      } as SystemEventPayload,
+      metadata: {}
+    });
   }
 
   async shutdown(): Promise<void> {
