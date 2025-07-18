@@ -1,7 +1,7 @@
 // CulturalTransformation.ts - Implements organizational culture modeling features
 // This module addresses the Cultural Transformation phase requirements
 
-import { AgentContract, ValidationResult, AgentSpecification, TraceEvent, AgentStatus, DesignArtifact, UserInteraction } from '../agents/AgentContract';
+import { AgentContract, ValidationResult, AgentSpecification, TraceEvent, AgentStatus, DesignArtifact, UserInteraction, EventPayload, CulturalTransformationEventPayload } from '../agents/AgentContract';
 
 // Cultural Transformation specific interfaces
 export interface CulturalTransformationStatus extends AgentStatus {
@@ -157,19 +157,27 @@ export class CulturalTransformationAgent implements AgentContract {
     this.initializeContinuousLearningFramework();
   }
 
-  async handleEvent(eventType: string, payload: unknown): Promise<void> {
+  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     switch (eventType) {
       case 'workshop.create':
-        await this.createDesignThinkingWorkshop(payload as DesignThinkingWorkshop);
+        if ('workshopId' in payload && payload.operation === 'workshop') {
+          await this.createDesignThinkingWorkshop(payload.data as DesignThinkingWorkshop);
+        }
         break;
       case 'team.form':
-        await this.formCrossFunctionalTeam(payload as CrossFunctionalTeam);
+        if ('teamId' in payload && payload.operation === 'team') {
+          await this.formCrossFunctionalTeam(payload.data as CrossFunctionalTeam);
+        }
         break;
       case 'metrics.track':
-        await this.trackInnovationMetrics(payload as InnovationMetrics);
+        if ('metricId' in payload && payload.operation === 'metric') {
+          await this.trackInnovationMetrics(payload.data as InnovationMetrics);
+        }
         break;
       case 'learning.path.create':
-        await this.createLearningPath(payload as LearningPath);
+        if ('learningPathId' in payload && payload.operation === 'learning') {
+          await this.createLearningPath(payload.data as LearningPath);
+        }
         break;
       default:
         console.log(`[CulturalTransformationAgent] Unknown event: ${eventType}`);
@@ -221,7 +229,7 @@ export class CulturalTransformationAgent implements AgentContract {
       result: errors.length === 0,
       consensus: true,
       reason: errors.length > 0 ? `Cultural transformation validation failed: ${errors.join(', ')}` : undefined,
-      details: { errors }
+      details: { errorCount: errors.length }
     };
   }
 
@@ -230,7 +238,12 @@ export class CulturalTransformationAgent implements AgentContract {
       {
         id: 'workshop-template-001',
         type: 'specification',
-        content: this.generateWorkshopTemplate(),
+        content: {
+          type: 'specification',
+          data: { template: this.generateWorkshopTemplate() },
+          metadata: { agentId: this.id, artifactType: 'workshop-template' },
+          schema: 'cultural-transformation-v1'
+        },
         version: '1.0.0',
         createdAt: new Date(),
         validatedBy: ['CulturalTransformationAgent']
@@ -238,7 +251,12 @@ export class CulturalTransformationAgent implements AgentContract {
       {
         id: 'team-formation-guide-001',
         type: 'specification',
-        content: this.generateTeamFormationGuide(),
+        content: {
+          type: 'specification',
+          data: { guide: this.generateTeamFormationGuide() },
+          metadata: { agentId: this.id, artifactType: 'team-formation-guide' },
+          schema: 'cultural-transformation-v1'
+        },
         version: '1.0.0',
         createdAt: new Date(),
         validatedBy: ['CulturalTransformationAgent']
@@ -246,7 +264,12 @@ export class CulturalTransformationAgent implements AgentContract {
       {
         id: 'metrics-dashboard-001',
         type: 'prototype',
-        content: this.generateMetricsDashboard(),
+        content: {
+          type: 'prototype',
+          data: { dashboard: this.generateMetricsDashboard() },
+          metadata: { agentId: this.id, artifactType: 'metrics-dashboard' },
+          schema: 'cultural-transformation-v1'
+        },
         version: '1.0.0',
         createdAt: new Date(),
         validatedBy: ['CulturalTransformationAgent']
@@ -254,7 +277,12 @@ export class CulturalTransformationAgent implements AgentContract {
       {
         id: 'learning-framework-001',
         type: 'specification',
-        content: this.generateLearningFramework(),
+        content: {
+          type: 'specification',
+          data: { framework: this.generateLearningFramework() },
+          metadata: { agentId: this.id, artifactType: 'learning-framework' },
+          schema: 'cultural-transformation-v1'
+        },
         version: '1.0.0',
         createdAt: new Date(),
         validatedBy: ['CulturalTransformationAgent']
@@ -267,7 +295,18 @@ export class CulturalTransformationAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'cultural.transformation.interaction',
-      payload: interaction,
+      payload: {
+        interactionId: interaction.id,
+        userId: interaction.userId,
+        sessionId: interaction.sessionId,
+        action: interaction.action,
+        context: interaction.context,
+        timestamp: interaction.timestamp,
+        outcome: interaction.outcome,
+        feedback: interaction.feedback,
+        correlationId: interaction.sessionId,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
@@ -540,7 +579,14 @@ export class CulturalTransformationAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'workshop.created',
-      payload: workshop,
+      payload: {
+        workshopId: workshop.id,
+        operation: 'workshop',
+        data: workshop,
+        timestamp: new Date(),
+        correlationId: workshop.id,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
@@ -550,7 +596,14 @@ export class CulturalTransformationAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'team.formed',
-      payload: team,
+      payload: {
+        teamId: team.id,
+        operation: 'team',
+        data: team,
+        timestamp: new Date(),
+        correlationId: team.id,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
@@ -560,7 +613,14 @@ export class CulturalTransformationAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'metrics.tracked',
-      payload: metric,
+      payload: {
+        metricId: metric.id,
+        operation: 'metric',
+        data: metric,
+        timestamp: new Date(),
+        correlationId: metric.id,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
@@ -572,7 +632,14 @@ export class CulturalTransformationAgent implements AgentContract {
       this.emitTrace({
         timestamp: new Date(),
         eventType: 'learning.path.created',
-        payload: path,
+        payload: {
+          learningPathId: path.id,
+          operation: 'learning',
+          data: path,
+          timestamp: new Date(),
+          correlationId: path.id,
+          sourceAgent: this.id
+        },
         metadata: { sourceAgent: this.id }
       });
     }

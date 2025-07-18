@@ -1,3 +1,80 @@
+// Typed Event Payloads
+export interface BaseEventPayload {
+  timestamp: Date;
+  correlationId?: string;
+  sourceAgent?: string;
+}
+
+export interface SpecificationEventPayload extends BaseEventPayload {
+  specificationId: string;
+  action: 'validate' | 'create' | 'update' | 'delete';
+  specification?: AgentSpecification;
+  validationResult?: ValidationResult;
+}
+
+export interface DesignEventPayload extends BaseEventPayload {
+  designId: string;
+  action: 'generate' | 'validate' | 'update';
+  designArtifact?: DesignArtifact;
+  userContext?: UserInteraction;
+}
+
+export interface UserInteractionEventPayload extends BaseEventPayload {
+  interactionId: string;
+  userId: string;
+  sessionId: string;
+  action: string;
+  context: Record<string, string | number | boolean>;
+  outcome: 'success' | 'failure' | 'partial';
+  feedback?: string;
+}
+
+export interface SystemEventPayload extends BaseEventPayload {
+  eventType: 'initialize' | 'shutdown' | 'error' | 'status-change';
+  status?: AgentStatus;
+  error?: Error;
+}
+
+export interface ValidationEventPayload extends BaseEventPayload {
+  ruleId: string;
+  input: Record<string, any>;
+  result: ValidationResult;
+  context: string;
+}
+
+export interface BackupEventPayload extends BaseEventPayload {
+  hash: string;
+  size?: number;
+  operation: 'store' | 'retrieve' | 'delete' | 'validate';
+  content?: string;
+}
+
+export interface SnapshotEventPayload extends BaseEventPayload {
+  snapshotId: string;
+  nodeCount?: number;
+  operation: 'create' | 'restore' | 'validate' | 'delete';
+  result?: boolean;
+}
+
+export interface CulturalTransformationEventPayload extends BaseEventPayload {
+  workshopId?: string;
+  teamId?: string;
+  metricId?: string;
+  learningPathId?: string;
+  operation: 'workshop' | 'team' | 'metric' | 'learning';
+  data?: Record<string, any>;
+}
+
+export type EventPayload = 
+  | SpecificationEventPayload
+  | DesignEventPayload
+  | UserInteractionEventPayload
+  | SystemEventPayload
+  | ValidationEventPayload
+  | BackupEventPayload
+  | SnapshotEventPayload
+  | CulturalTransformationEventPayload;
+
 export interface AgentContract {
   readonly id: string;
   readonly role: string;
@@ -5,7 +82,7 @@ export interface AgentContract {
   
   // Core lifecycle
   initialize(): Promise<void>;
-  handleEvent(eventType: string, payload: unknown): Promise<void>;
+  handleEvent(eventType: string, payload: EventPayload): Promise<void>;
   shutdown(): Promise<void>;
   
   // Observability
@@ -21,7 +98,7 @@ export interface AgentContract {
 export interface TraceEvent {
   timestamp: Date;
   eventType: string;
-  payload?: unknown;
+  payload?: EventPayload;
   metadata: {
     correlationId?: string;
     sourceAgent?: string;
@@ -40,7 +117,7 @@ export interface ValidationResult {
   consensus: boolean;
   reason?: string;
   escalatedTo?: string;
-  details?: Record<string, unknown>;
+  details?: Record<string, string | number | boolean>;
 }
 
 // DDD/SDD Enhanced Interfaces
@@ -94,11 +171,25 @@ export interface Constraint {
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
+export interface ValidationInput<T = Record<string, any>> {
+  data: T;
+  context: ValidationContext;
+  rules: ValidationRule[];
+  metadata?: Record<string, string | number | boolean>;
+}
+
+export interface ValidationContext {
+  agentId: string;
+  domain: string;
+  timestamp: Date;
+  environment: 'development' | 'staging' | 'production';
+}
+
 export interface ValidationRule {
   id: string;
   name: string;
   rule: string;
-  validator: (input: unknown) => ValidationResult;
+  validator: <T>(input: ValidationInput<T>) => ValidationResult;
   errorMessage: string;
 }
 
@@ -119,10 +210,17 @@ export interface UserRequirement {
   persona: string;
 }
 
+export interface DesignArtifactContent {
+  type: 'wireframe' | 'prototype' | 'userFlow' | 'interactionModel' | 'specification';
+  data: Record<string, any>;
+  metadata: Record<string, string | number | boolean>;
+  schema: string;
+}
+
 export interface DesignArtifact {
   id: string;
   type: 'wireframe' | 'prototype' | 'userFlow' | 'interactionModel' | 'specification';
-  content: unknown;
+  content: DesignArtifactContent;
   version: string;
   createdAt: Date;
   validatedBy: string[];
@@ -133,7 +231,7 @@ export interface UserInteraction {
   userId: string;
   sessionId: string;
   action: string;
-  context: Record<string, unknown>;
+  context: Record<string, string | number | boolean>;
   timestamp: Date;
   outcome: 'success' | 'failure' | 'partial';
   feedback?: string;
@@ -179,7 +277,7 @@ export interface Action {
   id: string;
   type: 'function' | 'event' | 'state-change';
   target: string;
-  parameters: Record<string, unknown>;
+  parameters: Record<string, string | number | boolean>;
 }
 
 export interface Condition {

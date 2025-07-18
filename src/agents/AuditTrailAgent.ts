@@ -1,4 +1,4 @@
-import { AgentContract, ValidationResult, TraceEvent, AgentStatus, AgentSpecification, DesignArtifact, UserInteraction } from './AgentContract';
+import { AgentContract, ValidationResult, TraceEvent, AgentStatus, AgentSpecification, DesignArtifact, UserInteraction, EventPayload } from './AgentContract';
 
 export class AuditTrailAgent implements AgentContract {
   readonly id: string;
@@ -28,7 +28,7 @@ export class AuditTrailAgent implements AgentContract {
     });
   }
 
-  async handleEvent(eventType: string, payload: unknown): Promise<void> {
+  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     this.logs.push({ eventType, payload, timestamp: Date.now() });
     this.emitTrace({
       timestamp: new Date(),
@@ -85,7 +85,12 @@ export class AuditTrailAgent implements AgentContract {
     return [{
       id: 'audit-artifact',
       type: 'specification',
-      content: { auditTrail: this.logs },
+      content: {
+        type: 'specification',
+        data: { auditTrail: this.logs },
+        metadata: { agentId: this.id, logCount: this.logs.length },
+        schema: 'audit-artifact-v1'
+      },
       version: '1.0.0',
       createdAt: new Date(),
       validatedBy: [this.id]
@@ -102,7 +107,18 @@ export class AuditTrailAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'user.interaction.tracked',
-      payload: interaction,
+      payload: {
+        interactionId: interaction.id,
+        userId: interaction.userId,
+        sessionId: interaction.sessionId,
+        action: interaction.action,
+        context: interaction.context,
+        timestamp: interaction.timestamp,
+        outcome: interaction.outcome,
+        feedback: interaction.feedback,
+        correlationId: interaction.sessionId,
+        sourceAgent: this.id
+      },
       metadata: {
         sourceAgent: this.id
       }
@@ -117,11 +133,11 @@ export class AuditTrailAgent implements AgentContract {
         consensus: false,
         reason: 'Missing traceId for audit trail',
         escalatedTo: this.role,
-        details: { step, domain }
+        details: { stepType: typeof step, domain }
       };
     }
     // Log peer results for traceability
     this.logs.push({ step, domain, peers: peers.map(p => p.id), timestamp: Date.now() });
-    return { result: true, consensus: true, details: { step, domain } };
+    return { result: true, consensus: true, details: { stepType: typeof step, domain } };
   }
 } 

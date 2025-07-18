@@ -346,7 +346,7 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
       step: index + 1,
       approver,
       role: approver,
-      status: 'pending' as 'pending'
+      status: 'pending' as const
     }));
     return {
       steps,

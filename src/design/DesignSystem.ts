@@ -1047,42 +1047,198 @@ export class DesignSystemManager {
   // Private helper methods
   
   private generateInsights(): string[] {
-    // Implementation for generating insights from user research
-    return [];
+    // Generate insights from user research data
+    const insights: string[] = [];
+    
+    // Analyze personas
+    if (this.userResearch.personas.length > 0) {
+      const avgTechnicalLevel = this.userResearch.personas.reduce((sum, p) => {
+        const levels = { beginner: 1, intermediate: 2, expert: 3 };
+        return sum + (levels[p.technicalLevel] || 1);
+      }, 0) / this.userResearch.personas.length;
+      
+      insights.push(`Average technical level: ${avgTechnicalLevel > 2 ? 'Expert' : avgTechnicalLevel > 1 ? 'Intermediate' : 'Beginner'}`);
+    }
+    
+    // Analyze pain points
+    const criticalPainPoints = this.userResearch.painPoints.filter(p => p.impact === 'critical' || p.impact === 'high');
+    if (criticalPainPoints.length > 0) {
+      insights.push(`${criticalPainPoints.length} high-impact pain points identified`);
+    }
+    
+    // Analyze user needs
+    const criticalNeeds = this.userResearch.needsAnalysis.filter(n => n.priority === 'critical' || n.priority === 'high');
+    if (criticalNeeds.length > 0) {
+      insights.push(`${criticalNeeds.length} high-priority user needs identified`);
+    }
+    
+    // Analyze journey maps
+    if (this.userResearch.journeyMaps.length > 0) {
+      const totalStages = this.userResearch.journeyMaps.reduce((sum, j) => sum + j.stages.length, 0);
+      insights.push(`Average journey length: ${Math.round(totalStages / this.userResearch.journeyMaps.length)} stages`);
+    }
+    
+    return insights;
   }
   
   private generateRecommendations(): string[] {
-    // Implementation for generating recommendations
-    return [];
+    // Generate actionable recommendations based on analysis
+    const recommendations: string[] = [];
+    
+    // Recommendations based on pain points
+    const frequentPainPoints = this.userResearch.painPoints.filter(p => p.frequency === 'frequent' || p.frequency === 'constant');
+    if (frequentPainPoints.length > 0) {
+      recommendations.push('Prioritize addressing frequent pain points in design solutions');
+    }
+    
+    // Recommendations based on user needs
+    const functionalNeeds = this.userResearch.needsAnalysis.filter(n => n.type === 'functional');
+    if (functionalNeeds.length > 0) {
+      recommendations.push('Focus on functional user needs in core features');
+    }
+    
+    // Recommendations based on design phase completeness
+    const totalDesignArtifacts = this.designPhase.wireframes.length + 
+                                this.designPhase.userFlows.length + 
+                                this.designPhase.interactionModels.length;
+    if (totalDesignArtifacts < 5) {
+      recommendations.push('Expand design artifacts for better coverage');
+    }
+    
+    // Recommendations based on design system
+    if (this.designSystem.components.components.length < 10) {
+      recommendations.push('Develop comprehensive component library');
+    }
+    
+    return recommendations;
   }
   
   private calculateCompleteness(): number {
-    // Implementation for calculating design phase completeness
-    return 0;
+    // Calculate design phase completeness as a percentage
+    const totalPossibleArtifacts = 3; // wireframes, userFlows, interactionModels
+    const completedArtifacts = [
+      this.designPhase.wireframes.length > 0 ? 1 : 0,
+      this.designPhase.userFlows.length > 0 ? 1 : 0,
+      this.designPhase.interactionModels.length > 0 ? 1 : 0
+    ].reduce((sum, val) => sum + val, 0);
+    
+    return Math.round((completedArtifacts / totalPossibleArtifacts) * 100);
   }
   
   private assessQuality(): number {
-    // Implementation for assessing design quality
-    return 0;
+    // Assess design quality based on validation results and artifact completeness
+    let qualityScore = 0;
+    
+    // Base score from validation results
+    const validationCount = this.designPhase.validationResults.length;
+    qualityScore += Math.min(validationCount * 10, 50); // Max 50 points for validation
+    
+    // Quality from artifact completeness
+    const wireframeQuality = this.designPhase.wireframes.filter(w => w.fidelity === 'high').length;
+    qualityScore += Math.min(wireframeQuality * 5, 25); // Max 25 points for high-fidelity wireframes
+    
+    const flowQuality = this.designPhase.userFlows.filter(f => f.steps.length > 3).length;
+    qualityScore += Math.min(flowQuality * 5, 25); // Max 25 points for detailed flows
+    
+    return Math.min(qualityScore, 100);
   }
   
   private calculateCoverage(): number {
-    // Implementation for calculating design system coverage
-    return 0;
+    // Calculate design system coverage as a percentage
+    const componentCount = this.designSystem.components.components.length;
+    const patternCount = this.designSystem.patterns.length;
+    const guidelineCount = this.designSystem.guidelines.length;
+    
+    // Weighted coverage calculation
+    const componentWeight = 0.5;
+    const patternWeight = 0.3;
+    const guidelineWeight = 0.2;
+    
+    const componentScore = Math.min(componentCount / 20, 1) * 100; // Target: 20 components
+    const patternScore = Math.min(patternCount / 10, 1) * 100; // Target: 10 patterns
+    const guidelineScore = Math.min(guidelineCount / 15, 1) * 100; // Target: 15 guidelines
+    
+    return Math.round(
+      (componentScore * componentWeight) +
+      (patternScore * patternWeight) +
+      (guidelineScore * guidelineWeight)
+    );
   }
   
   private assessConsistency(): number {
-    // Implementation for assessing design consistency
-    return 0;
+    // Assess design consistency based on component standardization and pattern usage
+    let consistencyScore = 0;
+    
+    // Component consistency
+    const components = this.designSystem.components.components;
+    if (components.length > 0) {
+      const standardizedComponents = components.filter(c => 
+        c.props.length > 0 && c.states.length > 0 && c.examples.length > 0
+      );
+      consistencyScore += (standardizedComponents.length / components.length) * 50;
+    }
+    
+    // Pattern consistency
+    const patterns = this.designSystem.patterns;
+    if (patterns.length > 0) {
+      const wellDocumentedPatterns = patterns.filter(p => 
+        p.examples.length > 0 && p.bestPractices.length > 0
+      );
+      consistencyScore += (wellDocumentedPatterns.length / patterns.length) * 30;
+    }
+    
+    // Guideline consistency
+    const guidelines = this.designSystem.guidelines;
+    if (guidelines.length > 0) {
+      const comprehensiveGuidelines = guidelines.filter(g => 
+        g.rules.length > 0 && g.examples.length > 0
+      );
+      consistencyScore += (comprehensiveGuidelines.length / guidelines.length) * 20;
+    }
+    
+    return Math.round(consistencyScore);
   }
   
   private calculateInnovationScore(): number {
-    // Implementation for calculating innovation score
-    return 0;
+    // Calculate innovation score based on organizational culture metrics
+    const innovation = this.organizationalCulture.innovationCulture;
+    
+    let score = 0;
+    
+    // Ideation metrics (25%)
+    score += Math.min(innovation.ideation.ideasPerEmployee * 10, 25);
+    
+    // Experimentation metrics (25%)
+    score += Math.min(innovation.experimentation.successRate, 25);
+    
+    // Implementation metrics (25%)
+    score += Math.min(innovation.implementation.userSatisfaction, 25);
+    
+    // Impact metrics (25%)
+    score += Math.min(innovation.impact.customerSatisfaction, 25);
+    
+    return Math.round(score);
   }
   
   private assessMaturity(): string {
-    // Implementation for assessing organizational maturity
+    // Assess organizational maturity based on multiple factors
+    const competencyLevels = this.organizationalCulture.designCompetency.levels.length;
+    const teamCount = this.organizationalCulture.crossFunctionalTeams.teams.length;
+    const innovationScore = this.calculateInnovationScore();
+    const designPhaseCompleteness = this.calculateCompleteness();
+    const designSystemCoverage = this.calculateCoverage();
+    
+    // Calculate maturity score
+    let maturityScore = 0;
+    maturityScore += Math.min(competencyLevels * 20, 40); // Max 40 points for competency levels
+    maturityScore += Math.min(teamCount * 10, 20); // Max 20 points for team structure
+    maturityScore += Math.min(innovationScore * 0.2, 20); // Max 20 points for innovation
+    maturityScore += Math.min(designPhaseCompleteness * 0.1, 10); // Max 10 points for design process
+    maturityScore += Math.min(designSystemCoverage * 0.1, 10); // Max 10 points for design system
+    
+    if (maturityScore >= 80) return 'expert';
+    if (maturityScore >= 60) return 'advanced';
+    if (maturityScore >= 40) return 'intermediate';
     return 'beginner';
   }
 }

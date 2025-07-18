@@ -9,7 +9,10 @@ import {
   UserInteraction,
   DesignIntent,
   UserRequirement,
-  ValidationRule
+  ValidationRule,
+  EventPayload,
+  ValidationInput,
+  ValidationContext
 } from './AgentContract';
 
 export class AikoAgent implements AgentContract {
@@ -59,7 +62,7 @@ export class AikoAgent implements AgentContract {
     });
   }
   
-  async handleEvent(eventType: string, payload: unknown): Promise<void> {
+  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     this.emitTrace({
       timestamp: new Date(),
       eventType,
@@ -69,13 +72,28 @@ export class AikoAgent implements AgentContract {
     
     switch (eventType) {
       case 'specification.validate':
-        await this.handleSpecificationValidation(payload as AgentSpecification);
+        if ('specificationId' in payload && 'specification' in payload) {
+          await this.handleSpecificationValidation(payload.specification!);
+        }
         break;
       case 'design.artifact.generate':
-        await this.handleDesignArtifactGeneration(payload as DesignIntent);
+        if ('designId' in payload && 'userContext' in payload) {
+          await this.handleDesignArtifactGeneration(payload.userContext!);
+        }
         break;
       case 'user.interaction.track':
-        await this.handleUserInteractionTracking(payload as UserInteraction);
+        if ('interactionId' in payload && 'userId' in payload) {
+          await this.handleUserInteractionTracking({
+            id: payload.interactionId,
+            userId: payload.userId,
+            sessionId: payload.sessionId,
+            action: payload.action,
+            context: payload.context,
+            timestamp: payload.timestamp,
+            outcome: payload.outcome,
+            feedback: payload.feedback
+          });
+        }
         break;
       default:
         // Handle unknown event types with semantic validation
@@ -147,19 +165,19 @@ export class AikoAgent implements AgentContract {
   } {
     // Mock span implementation - in production, this would use OpenTelemetry
     return {
-      setAttributes: (attributes: Record<string, unknown>) => {
+      setAttributes: (attributes: Record<string, unknown>): void => {
         // Store attributes for later use
         this.traceAttributes = { ...this.traceAttributes, ...attributes };
       },
-      addEvent: (name: string, attributes?: Record<string, unknown>) => {
+      addEvent: (name: string, attributes?: Record<string, unknown>): void => {
         // Store event for later processing
         this.traceEvents.push({ name, attributes, timestamp: new Date() });
       },
-      recordException: (error: Error) => {
+      recordException: (error: Error): void => {
         // Store exception for error tracking
         this.traceExceptions.push({ error, timestamp: new Date() });
       },
-      end: () => {
+      end: (): void => {
         // Finalize span and send to tracing system
         this.finalizeTraceSpan();
       }
@@ -258,7 +276,7 @@ export class AikoAgent implements AgentContract {
       consensus: results.every(r => r.consensus),
       reason: results.some(r => !r.result) ? 'Specification validation failed' : undefined,
       details: {
-        validationResults: results,
+        validationResults: results.length,
         specificationId: spec.id
       }
     };
@@ -273,7 +291,18 @@ export class AikoAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'user.interaction.tracked',
-      payload: interaction,
+      payload: {
+        interactionId: interaction.id,
+        userId: interaction.userId,
+        sessionId: interaction.sessionId,
+        action: interaction.action,
+        context: interaction.context,
+        timestamp: interaction.timestamp,
+        outcome: interaction.outcome,
+        feedback: interaction.feedback,
+        correlationId: interaction.sessionId,
+        sourceAgent: this.id
+      },
       metadata: {
         sourceAgent: this.id
       }
@@ -288,8 +317,8 @@ export class AikoAgent implements AgentContract {
         id: 'req-001',
         name: 'Agent ID Required',
         rule: 'Agent must have a unique ID',
-        validator: (input: unknown): ValidationResult => {
-          const spec = input as AgentSpecification;
+        validator: <T>(input: ValidationInput<T>): ValidationResult => {
+          const spec = input.data as AgentSpecification;
           return {
             result: !!spec.id && spec.id.length > 0,
             consensus: true,
@@ -302,8 +331,8 @@ export class AikoAgent implements AgentContract {
         id: 'req-002',
         name: 'Role Definition',
         rule: 'Agent must have a defined role',
-        validator: (input: unknown): ValidationResult => {
-          const spec = input as AgentSpecification;
+        validator: <T>(input: ValidationInput<T>): ValidationResult => {
+          const spec = input.data as AgentSpecification;
           return {
             result: !!spec.role && spec.role.length > 0,
             consensus: true,
@@ -316,8 +345,8 @@ export class AikoAgent implements AgentContract {
         id: 'req-003',
         name: 'Capabilities Required',
         rule: 'Agent must have at least one capability',
-        validator: (input: unknown): ValidationResult => {
-          const spec = input as AgentSpecification;
+        validator: <T>(input: ValidationInput<T>): ValidationResult => {
+          const spec = input.data as AgentSpecification;
           return {
             result: spec.capabilities.length > 0,
             consensus: true,
@@ -432,16 +461,35 @@ export class AikoAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'specification.validated',
-      payload: { specification: spec, result },
+      payload: {
+        specificationId: spec.id,
+        action: 'validate',
+        specification: spec,
+        validationResult: result,
+        timestamp: new Date(),
+        correlationId: spec.id,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
   
-  private async handleDesignArtifactGeneration(designIntent: DesignIntent): Promise<void> {
+  private async handleDesignArtifactGeneration(userContext: UserInteraction): Promise<void> {
     const artifact: DesignArtifact = {
       id: `artifact-${Date.now()}`,
       type: 'specification',
-      content: designIntent,
+      content: {
+        type: 'specification',
+        data: {
+          userContext: userContext,
+          generatedAt: new Date().toISOString()
+        },
+        metadata: {
+          agentId: this.id,
+          sessionId: userContext.sessionId
+        },
+        schema: 'design-artifact-v1'
+      },
       version: '1.0.0',
       createdAt: new Date(),
       validatedBy: [this.id]
@@ -452,7 +500,15 @@ export class AikoAgent implements AgentContract {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'design.artifact.generated',
-      payload: artifact,
+      payload: {
+        designId: artifact.id,
+        action: 'generate',
+        designArtifact: artifact,
+        userContext: userContext,
+        timestamp: new Date(),
+        correlationId: userContext.sessionId,
+        sourceAgent: this.id
+      },
       metadata: { sourceAgent: this.id }
     });
   }
@@ -461,12 +517,19 @@ export class AikoAgent implements AgentContract {
     this.trackUserInteraction(interaction);
   }
 
-  private async handleUnknownEvent(eventType: string, payload: unknown): Promise<void> {
+  private async handleUnknownEvent(eventType: string, payload: EventPayload): Promise<void> {
     // Semantic validation for unknown event types
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'unknown.event.received',
-      payload: { eventType, payload },
+      payload: {
+        eventType: 'error',
+        status: { status: 'error', uptime: Date.now() },
+        error: new Error(`Unknown event type: ${eventType}`),
+        timestamp: new Date(),
+        correlationId: 'unknown-event',
+        sourceAgent: this.id
+      },
       metadata: {
         sourceAgent: this.id
       }

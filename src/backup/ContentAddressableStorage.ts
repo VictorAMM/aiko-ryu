@@ -4,9 +4,8 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import { ValidationResult } from '../agents/AgentContract';
+import { ValidationResult, TraceEvent, BackupEventPayload, SnapshotEventPayload } from '../agents/AgentContract';
 import path from 'path';
-import { TraceEvent } from '../agents/AgentContract';
 
 // Core CAS interfaces aligned with DDD/SDD principles
 export interface ContentAddressableStorage {
@@ -115,7 +114,14 @@ export class AikoCAS implements ContentAddressableStorage {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'cas.content.stored',
-      payload: { hash, size: contentStr.length },
+      payload: {
+        hash,
+        size: contentStr.length,
+        operation: 'store',
+        timestamp: new Date(),
+        correlationId: hash,
+        sourceAgent: 'AikoCAS'
+      },
       metadata: { sourceAgent: 'AikoCAS' }
     });
     
@@ -135,7 +141,13 @@ export class AikoCAS implements ContentAddressableStorage {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'cas.content.retrieved',
-      payload: { hash },
+      payload: {
+        hash,
+        operation: 'retrieve',
+        timestamp: new Date(),
+        correlationId: hash,
+        sourceAgent: 'AikoCAS'
+      },
       metadata: { sourceAgent: 'AikoCAS' }
     });
     
@@ -156,7 +168,13 @@ export class AikoCAS implements ContentAddressableStorage {
       this.emitTrace({
         timestamp: new Date(),
         eventType: 'cas.content.deleted',
-        payload: { hash },
+        payload: {
+          hash,
+          operation: 'delete',
+          timestamp: new Date(),
+          correlationId: hash,
+          sourceAgent: 'AikoCAS'
+        },
         metadata: { sourceAgent: 'AikoCAS' }
       });
       
@@ -246,7 +264,14 @@ export class RyuMetadataDAG {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'dag.snapshot.created',
-      payload: { snapshotId: snapshot.id, nodeCount: Object.keys(nodes).length },
+      payload: {
+        snapshotId: snapshot.id,
+        nodeCount: Object.keys(nodes).length,
+        operation: 'create',
+        timestamp: new Date(),
+        correlationId: snapshot.id,
+        sourceAgent: 'RyuMetadataDAG'
+      },
       metadata: { sourceAgent: 'RyuMetadataDAG' }
     });
     
@@ -297,8 +322,8 @@ export class RyuMetadataDAG {
       consensus: recomputedNodes.length === 0,
       reason: recomputedNodes.length > 0 ? `Nodes need recomputation: ${recomputedNodes.join(', ')}` : undefined,
       details: {
-        restoredNodes,
-        recomputedNodes,
+        restoredNodesCount: restoredNodes.length,
+        recomputedNodesCount: recomputedNodes.length,
         totalNodes: sortedNodes.length,
         policy: policy.strategy
       }
@@ -308,7 +333,14 @@ export class RyuMetadataDAG {
     this.emitTrace({
       timestamp: new Date(),
       eventType: 'dag.snapshot.restored',
-      payload: { snapshotId, result },
+      payload: {
+        snapshotId,
+        result: result.result,
+        operation: 'restore',
+        timestamp: new Date(),
+        correlationId: snapshotId,
+        sourceAgent: 'RyuMetadataDAG'
+      },
       metadata: { sourceAgent: 'RyuMetadataDAG' }
     });
     
@@ -330,7 +362,13 @@ export class RyuMetadataDAG {
       this.emitTrace({
         timestamp: new Date(),
         eventType: 'dag.snapshot.deleted',
-        payload: { snapshotId },
+        payload: {
+          snapshotId,
+          operation: 'delete',
+          timestamp: new Date(),
+          correlationId: snapshotId,
+          sourceAgent: 'RyuMetadataDAG'
+        },
         metadata: { sourceAgent: 'RyuMetadataDAG' }
       });
       
