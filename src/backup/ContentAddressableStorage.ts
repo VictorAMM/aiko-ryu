@@ -4,7 +4,7 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import { ValidationResult, TraceEvent, BackupEventPayload, SnapshotEventPayload } from '../agents/AgentContract';
+import { ValidationResult, TraceEvent } from '../agents/AgentContract';
 import path from 'path';
 
 // Core CAS interfaces aligned with DDD/SDD principles
@@ -322,6 +322,8 @@ export class RyuMetadataDAG {
       consensus: recomputedNodes.length === 0,
       reason: recomputedNodes.length > 0 ? `Nodes need recomputation: ${recomputedNodes.join(', ')}` : undefined,
       details: {
+        restoredNodes: restoredNodes.join(','),
+        recomputedNodes: recomputedNodes.join(','),
         restoredNodesCount: restoredNodes.length,
         recomputedNodesCount: recomputedNodes.length,
         totalNodes: sortedNodes.length,

@@ -1,5 +1,5 @@
 // test/agentContract.test.ts
-import { AgentContract } from '../src/agents/AgentContract';
+import { AgentContract, SystemEventPayload } from '../src/agents/AgentContract';
 import { AikoAgent } from '../src/agents/AikoAgent';
 
 describe('AgentContract', () => {
@@ -27,7 +27,11 @@ describe('AgentContract', () => {
   describe('handleEvent()', () => {
     it('should process events without error', async () => {
       await agent.initialize();
-      await expect(agent.handleEvent('test.event', {})).resolves.not.toThrow();
+      await expect(agent.handleEvent('test.event', {
+        timestamp: new Date(),
+        correlationId: 'test-event',
+        sourceAgent: agent.id
+      } as SystemEventPayload)).resolves.not.toThrow();
     });
   });
   

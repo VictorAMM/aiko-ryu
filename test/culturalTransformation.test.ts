@@ -55,7 +55,14 @@ describe('CulturalTransformationAgent', () => {
         }
       };
 
-      await agent.handleEvent('workshop.create', workshop);
+      await agent.handleEvent('workshop.create', {
+        workshopId: workshop.id,
+        operation: 'workshop',
+        data: workshop,
+        timestamp: new Date(),
+        correlationId: workshop.id,
+        sourceAgent: agent.id
+      });
       const status = agent.getStatus();
       expect(status.workshops).toBeGreaterThan(1); // Should have default + new workshop
     });
@@ -121,7 +128,14 @@ describe('CulturalTransformationAgent', () => {
         collaborationTools: ['Figma', 'GitHub']
       };
 
-      await agent.handleEvent('team.form', team);
+      await agent.handleEvent('team.form', {
+        teamId: team.id,
+        operation: 'team',
+        data: team,
+        timestamp: new Date(),
+        correlationId: team.id,
+        sourceAgent: agent.id
+      });
       const status = agent.getStatus();
       expect(status.teams).toBeGreaterThan(1); // Should have default + new team
     });
@@ -172,7 +186,14 @@ describe('CulturalTransformationAgent', () => {
         frequency: 'monthly'
       };
 
-      await agent.handleEvent('metrics.track', metric);
+      await agent.handleEvent('metrics.track', {
+        metricId: metric.id,
+        operation: 'metric',
+        data: metric,
+        timestamp: new Date(),
+        correlationId: metric.id,
+        sourceAgent: agent.id
+      });
       const status = agent.getStatus();
       expect(status.metrics).toBeGreaterThan(4); // Should have default + new metric
     });
@@ -229,7 +250,14 @@ describe('CulturalTransformationAgent', () => {
         difficulty: 'beginner'
       };
 
-      await agent.handleEvent('learning.path.create', learningPath);
+      await agent.handleEvent('learning.path.create', {
+        learningPathId: learningPath.id,
+        operation: 'learning',
+        data: learningPath,
+        timestamp: new Date(),
+        correlationId: learningPath.id,
+        sourceAgent: agent.id
+      });
       const status = agent.getStatus();
       expect(status.learningFrameworks).toBeGreaterThan(0);
     });
@@ -405,7 +433,14 @@ describe('CulturalTransformationAgent', () => {
         }
       };
 
-      await agent.handleEvent('workshop.create', workshop);
+      await agent.handleEvent('workshop.create', {
+        workshopId: workshop.id,
+        operation: 'workshop',
+        data: workshop,
+        timestamp: new Date(),
+        correlationId: workshop.id,
+        sourceAgent: agent.id
+      });
       // Should not throw error
     });
 
@@ -436,7 +471,14 @@ describe('CulturalTransformationAgent', () => {
         collaborationTools: ['GitHub']
       };
 
-      await agent.handleEvent('team.form', team);
+      await agent.handleEvent('team.form', {
+        teamId: team.id,
+        operation: 'team',
+        data: team,
+        timestamp: new Date(),
+        correlationId: team.id,
+        sourceAgent: agent.id
+      });
       // Should not throw error
     });
 
@@ -453,7 +495,14 @@ describe('CulturalTransformationAgent', () => {
         frequency: 'monthly'
       };
 
-      await agent.handleEvent('metrics.track', metric);
+      await agent.handleEvent('metrics.track', {
+        metricId: metric.id,
+        operation: 'metric',
+        data: metric,
+        timestamp: new Date(),
+        correlationId: metric.id,
+        sourceAgent: agent.id
+      });
       // Should not throw error
     });
 
@@ -491,14 +540,26 @@ describe('CulturalTransformationAgent', () => {
         difficulty: 'beginner'
       };
 
-      await agent.handleEvent('learning.path.create', learningPath);
+      await agent.handleEvent('learning.path.create', {
+        learningPathId: learningPath.id,
+        operation: 'learning',
+        data: learningPath,
+        timestamp: new Date(),
+        correlationId: learningPath.id,
+        sourceAgent: agent.id
+      });
       // Should not throw error
     });
 
     it('should handle unknown events gracefully', async () => {
       await agent.initialize();
       
-      await agent.handleEvent('unknown.event', {});
+      await agent.handleEvent('unknown.event', {
+        operation: 'workshop',
+        timestamp: new Date(),
+        correlationId: 'unknown-event',
+        sourceAgent: agent.id
+      });
       // Should not throw error and should log unknown event
     });
   });
@@ -527,7 +588,12 @@ describe('CulturalTransformationAgent', () => {
       const event = {
         timestamp: new Date(),
         eventType: 'test.event',
-        payload: { test: 'data' },
+        payload: {
+          operation: 'workshop' as const,
+          timestamp: new Date(),
+          correlationId: 'test-event',
+          sourceAgent: agent.id
+        },
         metadata: { sourceAgent: agent.id }
       };
 

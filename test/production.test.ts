@@ -4,7 +4,7 @@
 import { AikoAgent } from '../src/agents/AikoAgent';
 import { CulturalTransformationAgent } from '../src/design/CulturalTransformation';
 import { SpecificationEngine } from '../src/specifications/SpecificationEngine';
-import { AgentSpecification, TraceEvent, ValidationResult } from '../src/agents/AgentContract';
+import { AgentSpecification, TraceEvent, ValidationResult, SystemEventPayload } from '../src/agents/AgentContract';
 
 describe('Production System Tests', () => {
   let aikoAgent: AikoAgent;
@@ -58,21 +58,26 @@ describe('Production System Tests', () => {
     });
 
     it('should maintain system stability under load', async () => {
-      const events: Array<{eventType: string; payload: unknown; timestamp: Date}> = [];
+      const events: Array<{eventType: string; payload: SystemEventPayload; timestamp: Date}> = [];
       const startTime = Date.now();
 
       // Generate high load of events
       for (let i = 0; i < 100; i++) {
         events.push({
           eventType: 'test.event',
-          payload: { id: i, data: `test-data-${i}` },
+          payload: {
+            eventType: 'status-change',
+            timestamp: new Date(),
+            correlationId: `test-event-${i}`,
+            sourceAgent: 'aiko-prod-001'
+          } as SystemEventPayload,
           timestamp: new Date()
         });
       }
 
       // Process events concurrently
       const promises = events.map(event => 
-        aikoAgent.handleEvent(event.eventType, event.payload)
+        aikoAgent.handleEvent(event.eventType, event.payload as SystemEventPayload)
       );
 
       await Promise.all(promises);
@@ -98,7 +103,7 @@ describe('Production System Tests', () => {
 
       for (const event of invalidEvents) {
         await expect(
-          aikoAgent.handleEvent(event.eventType, event.payload)
+          aikoAgent.handleEvent(event.eventType, event.payload as SystemEventPayload)
         ).resolves.not.toThrow();
       }
 
@@ -117,7 +122,12 @@ describe('Production System Tests', () => {
       expect(status.status).toBe('ready');
       
       // Verify agent can still process events
-      await aikoAgent.handleEvent('test.recovery', { test: 'data' });
+      await aikoAgent.handleEvent('test.recovery', {
+        eventType: 'status-change',
+        timestamp: new Date(),
+        correlationId: 'test-recovery',
+        sourceAgent: aikoAgent.id
+      } as SystemEventPayload);
     });
 
     it('should handle specification validation errors', () => {
@@ -175,7 +185,14 @@ describe('Production System Tests', () => {
       };
 
       // Create workshop
-      await culturalAgent.handleEvent('workshop.create', workshopData);
+      await culturalAgent.handleEvent('workshop.create', {
+        workshopId: workshopData.id,
+        operation: 'workshop',
+        data: workshopData,
+        timestamp: new Date(),
+        correlationId: workshopData.id,
+        sourceAgent: culturalAgent.id
+      });
       
       // Verify data integrity
       const status = culturalAgent.getStatus();
@@ -186,8 +203,12 @@ describe('Production System Tests', () => {
       for (let i = 0; i < 10; i++) {
         operations.push(
           culturalAgent.handleEvent('workshop.create', {
-            ...workshopData,
-            id: `prod-workshop-${i + 2}`
+            workshopId: `prod-workshop-${i + 2}`,
+            operation: 'workshop',
+            data: { ...workshopData, id: `prod-workshop-${i + 2}` },
+            timestamp: new Date(),
+            correlationId: `prod-workshop-${i + 2}`,
+            sourceAgent: culturalAgent.id
           })
         );
       }
@@ -421,18 +442,18 @@ describe('Production System Tests', () => {
   describe('Performance & Scalability', () => {
     it('should handle high-volume event processing', async () => {
       const eventCount = 1000;
-      const events: Array<{eventType: string; payload: unknown}> = [];
+      const events: Array<{eventType: string; payload: SystemEventPayload}> = [];
 
       // Generate high volume of events
       for (let i = 0; i < eventCount; i++) {
         events.push({
           eventType: 'high.volume.event',
           payload: {
-            id: i,
+            eventType: 'status-change',
             timestamp: new Date(),
-            data: `event-data-${i}`,
-            metadata: { source: 'performance-test' }
-          }
+            correlationId: `high-volume-${i}`,
+            sourceAgent: 'aiko-prod-001'
+          } as SystemEventPayload
         });
       }
 
@@ -443,7 +464,7 @@ describe('Production System Tests', () => {
       for (let i = 0; i < events.length; i += batchSize) {
         const batch = events.slice(i, i + batchSize);
         const promises = batch.map(event => 
-          aikoAgent.handleEvent(event.eventType, event.payload)
+          aikoAgent.handleEvent(event.eventType, event.payload as SystemEventPayload)
         );
         await Promise.all(promises);
       }
@@ -474,9 +495,11 @@ describe('Production System Tests', () => {
       // Process large data multiple times
       for (let i = 0; i < 100; i++) {
         await aikoAgent.handleEvent('large.data.event', {
-          ...largeData,
-          id: `large-data-${i}`
-        });
+          eventType: 'status-change',
+          timestamp: new Date(),
+          correlationId: `large-data-${i}`,
+          sourceAgent: aikoAgent.id
+        } as SystemEventPayload);
       }
 
       const endTime = Date.now();
@@ -661,7 +684,14 @@ describe('Production System Tests', () => {
         }
       };
 
-      await culturalAgent.handleEvent('workshop.create', workshop);
+      await culturalAgent.handleEvent('workshop.create', {
+        workshopId: workshop.id,
+        operation: 'workshop',
+        data: workshop,
+        timestamp: new Date(),
+        correlationId: workshop.id,
+        sourceAgent: culturalAgent.id
+      });
 
       // 7. Final Validation
       const aikoStatus = aikoAgent.getStatus();
@@ -686,7 +716,12 @@ describe('Production System Tests', () => {
         {
           name: 'Invalid event data',
           action: async (): Promise<boolean> => {
-            await aikoAgent.handleEvent('invalid.event', null);
+            await aikoAgent.handleEvent('invalid.event', {
+              eventType: 'status-change',
+              timestamp: new Date(),
+              correlationId: 'invalid-event',
+              sourceAgent: aikoAgent.id
+            } as SystemEventPayload);
             return true; // Should not throw
           },
           expectedResult: true
@@ -766,7 +801,12 @@ describe('Production System Tests', () => {
       };
 
       // Perform some operations
-      aikoAgent.handleEvent('test.event', { test: 'data' });
+      aikoAgent.handleEvent('test.event', {
+        eventType: 'status-change',
+        timestamp: new Date(),
+        correlationId: 'test-event',
+        sourceAgent: aikoAgent.id
+      } as SystemEventPayload);
       aikoAgent.validateSpecification({
         id: 'test-spec',
         role: 'TestAgent',

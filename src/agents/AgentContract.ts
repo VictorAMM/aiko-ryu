@@ -37,7 +37,7 @@ export interface SystemEventPayload extends BaseEventPayload {
 
 export interface ValidationEventPayload extends BaseEventPayload {
   ruleId: string;
-  input: Record<string, any>;
+  input: Record<string, unknown>;
   result: ValidationResult;
   context: string;
 }
@@ -62,7 +62,7 @@ export interface CulturalTransformationEventPayload extends BaseEventPayload {
   metricId?: string;
   learningPathId?: string;
   operation: 'workshop' | 'team' | 'metric' | 'learning';
-  data?: Record<string, any>;
+  data?: unknown;
 }
 
 export type EventPayload = 
@@ -171,7 +171,7 @@ export interface Constraint {
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
-export interface ValidationInput<T = Record<string, any>> {
+export interface ValidationInput<T = Record<string, unknown>> {
   data: T;
   context: ValidationContext;
   rules: ValidationRule[];
@@ -212,7 +212,7 @@ export interface UserRequirement {
 
 export interface DesignArtifactContent {
   type: 'wireframe' | 'prototype' | 'userFlow' | 'interactionModel' | 'specification';
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   metadata: Record<string, string | number | boolean>;
   schema: string;
 }

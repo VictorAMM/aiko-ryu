@@ -11,8 +11,7 @@ import {
   UserRequirement,
   ValidationRule,
   EventPayload,
-  ValidationInput,
-  ValidationContext
+  ValidationInput
 } from './AgentContract';
 
 export class AikoAgent implements AgentContract {
@@ -517,7 +516,7 @@ export class AikoAgent implements AgentContract {
     this.trackUserInteraction(interaction);
   }
 
-  private async handleUnknownEvent(eventType: string, payload: EventPayload): Promise<void> {
+  private async handleUnknownEvent(eventType: string, _payload: EventPayload): Promise<void> {
     // Semantic validation for unknown event types
     this.emitTrace({
       timestamp: new Date(),

@@ -1,7 +1,7 @@
 // CulturalTransformation.ts - Implements organizational culture modeling features
 // This module addresses the Cultural Transformation phase requirements
 
-import { AgentContract, ValidationResult, AgentSpecification, TraceEvent, AgentStatus, DesignArtifact, UserInteraction, EventPayload, CulturalTransformationEventPayload } from '../agents/AgentContract';
+import { AgentContract, ValidationResult, AgentSpecification, TraceEvent, AgentStatus, DesignArtifact, UserInteraction, EventPayload } from '../agents/AgentContract';
 
 // Cultural Transformation specific interfaces
 export interface CulturalTransformationStatus extends AgentStatus {
@@ -160,22 +160,22 @@ export class CulturalTransformationAgent implements AgentContract {
   async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     switch (eventType) {
       case 'workshop.create':
-        if ('workshopId' in payload && payload.operation === 'workshop') {
+        if ('workshopId' in payload && payload.operation === 'workshop' && payload.data) {
           await this.createDesignThinkingWorkshop(payload.data as DesignThinkingWorkshop);
         }
         break;
       case 'team.form':
-        if ('teamId' in payload && payload.operation === 'team') {
+        if ('teamId' in payload && payload.operation === 'team' && payload.data) {
           await this.formCrossFunctionalTeam(payload.data as CrossFunctionalTeam);
         }
         break;
       case 'metrics.track':
-        if ('metricId' in payload && payload.operation === 'metric') {
+        if ('metricId' in payload && payload.operation === 'metric' && payload.data) {
           await this.trackInnovationMetrics(payload.data as InnovationMetrics);
         }
         break;
       case 'learning.path.create':
-        if ('learningPathId' in payload && payload.operation === 'learning') {
+        if ('learningPathId' in payload && payload.operation === 'learning' && payload.data) {
           await this.createLearningPath(payload.data as LearningPath);
         }
         break;
@@ -582,7 +582,7 @@ export class CulturalTransformationAgent implements AgentContract {
       payload: {
         workshopId: workshop.id,
         operation: 'workshop',
-        data: workshop,
+        data: workshop as unknown,
         timestamp: new Date(),
         correlationId: workshop.id,
         sourceAgent: this.id
@@ -599,7 +599,7 @@ export class CulturalTransformationAgent implements AgentContract {
       payload: {
         teamId: team.id,
         operation: 'team',
-        data: team,
+        data: team as unknown,
         timestamp: new Date(),
         correlationId: team.id,
         sourceAgent: this.id
@@ -616,7 +616,7 @@ export class CulturalTransformationAgent implements AgentContract {
       payload: {
         metricId: metric.id,
         operation: 'metric',
-        data: metric,
+        data: metric as unknown,
         timestamp: new Date(),
         correlationId: metric.id,
         sourceAgent: this.id
@@ -635,7 +635,7 @@ export class CulturalTransformationAgent implements AgentContract {
         payload: {
           learningPathId: path.id,
           operation: 'learning',
-          data: path,
+          data: path as unknown,
           timestamp: new Date(),
           correlationId: path.id,
           sourceAgent: this.id
