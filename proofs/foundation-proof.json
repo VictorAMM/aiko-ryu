@@ -1,0 +1,12 @@
+{
+  "result": false,
+  "consensus": false,
+  "reason": "Some validations failed",
+  "details": {
+    "componentId": "foundation",
+    "timestamp": "2025-07-18T04:48:19.115Z",
+    "validationCount": 5,
+    "passedValidations": 2,
+    "specificationId": "foundation"
+  }
+}

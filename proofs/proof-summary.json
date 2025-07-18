@@ -1,7 +1,20 @@
 {
-  "timestamp": "2025-07-17T05:53:59.774Z",
-  "totalReports": 0,
+  "timestamp": "2025-07-18T04:48:19.115Z",
+  "totalReports": 1,
   "passedReports": 0,
-  "failedReports": 0,
-  "reports": {}
+  "failedReports": 1,
+  "reports": {
+    "foundation": {
+      "result": false,
+      "consensus": false,
+      "reason": "Some validations failed",
+      "details": {
+        "componentId": "foundation",
+        "timestamp": "2025-07-18T04:48:19.115Z",
+        "validationCount": 5,
+        "passedValidations": 2,
+        "specificationId": "foundation"
+      }
+    }
+  }
 }
