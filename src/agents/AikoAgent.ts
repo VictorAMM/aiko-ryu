@@ -23,6 +23,7 @@ export class AikoAgent implements AgentContract {
     status: 'initializing',
     uptime: 0
   };
+  private startTime: number = Date.now();
   
   // DDD/SDD state
   private specifications: Map<string, AgentSpecification> = new Map();
@@ -50,9 +51,10 @@ export class AikoAgent implements AgentContract {
   }
   
   async initialize(): Promise<void> {
+    this.startTime = Date.now();
     this.status = {
       status: 'ready',
-      uptime: Date.now()
+      uptime: 0
     };
     this.emitTrace({
       timestamp: new Date(),
@@ -240,8 +242,8 @@ export class AikoAgent implements AgentContract {
     return {
       ...this.status,
       uptime: this.status.status === 'ready' 
-        ? Date.now() - this.status.uptime 
-        : this.status.uptime
+        ? Date.now() - this.startTime 
+        : 0
     };
   }
   

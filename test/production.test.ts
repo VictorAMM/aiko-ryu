@@ -772,7 +772,10 @@ describe('Production System Tests', () => {
   });
 
   describe('Monitoring & Observability', () => {
-    it('should provide comprehensive system metrics', () => {
+    it('should provide comprehensive system metrics', async () => {
+      // Add a small delay to ensure agent is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
       const aikoStatus = aikoAgent.getStatus();
       const culturalStatus = culturalAgent.getStatus();
 
