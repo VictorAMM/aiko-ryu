@@ -1,5 +1,5 @@
 import { AlexAgent } from '../src/agents/AlexAgent';
-import { ValidationEventPayload, AgentStatus } from '../src/agents/AgentContract';
+import { ValidationEventPayload } from '../src/agents/AgentContract';
 
 describe('AlexAgent - DAG Orchestrator', () => {
   let alex: AlexAgent;

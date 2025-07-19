@@ -1468,7 +1468,7 @@ export class RyuAgent implements RyuAgentContract {
     return _context.type !== 'unknown' && _context.agentId !== '';
   }
 
-  private validatePolicyCompliance(output: FormattedOutput, context: AuditContext): ValidationResult {
+  private validatePolicyCompliance(output: FormattedOutput, _context: AuditContext): ValidationResult {
     // Use existing policy validation
     return this.validateAgainstPolicies(output.content);
   }

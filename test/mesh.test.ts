@@ -236,7 +236,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
     it('should restore system snapshots', async () => {
       await mesh.initialize();
       
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-1');
       await mesh.registerAgent(aiko);
       
       const snapshot = await mesh.createSystemSnapshot();
@@ -267,7 +267,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
     it('should get agent interactions', async () => {
       await mesh.initialize();
       
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-2');
       await mesh.registerAgent(aiko);
       
       const interactions = await mesh.getAgentInteractions('aiko');
@@ -328,7 +328,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
       await mesh.initialize();
       
       // Try to register the same agent twice
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-3');
       await mesh.registerAgent(aiko);
       
       const result = await mesh.registerAgent(aiko);
@@ -391,7 +391,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
     it('should shutdown gracefully', async () => {
       await mesh.initialize();
       
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-4');
       await mesh.registerAgent(aiko);
       
       await mesh.shutdown();
@@ -410,7 +410,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
       await mesh.initialize();
       
       // Register all agents
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-5');
       const ryu = new RyuAgent({});
       const alex = new AlexAgent({});
       const maya = new MayaAgent({});
@@ -449,7 +449,7 @@ describe('AikoRyuMesh - Autonomous Agent Orchestration System', () => {
     it('should handle agent failures gracefully', async () => {
       await mesh.initialize();
       
-      const aiko = new AikoAgent({});
+      const aiko = new AikoAgent('aiko-test-6');
       await mesh.registerAgent(aiko);
       
       // Simulate agent failure by trying to communicate with a non-existent agent

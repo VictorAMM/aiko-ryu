@@ -1,5 +1,5 @@
 import { BusinessLogicAgent } from '../src/agents/BusinessLogicAgent';
-import { ValidationEventPayload, AgentStatus } from '../src/agents/AgentContract';
+import { ValidationEventPayload } from '../src/agents/AgentContract';
 
 describe('BusinessLogicAgent - Business Rule Engine', () => {
   let businessLogic: BusinessLogicAgent;

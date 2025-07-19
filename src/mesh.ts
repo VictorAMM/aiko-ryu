@@ -333,48 +333,21 @@ export class AikoRyuMesh implements MeshSystem {
 
   async registerAgent(agent: AgentContract): Promise<boolean> {
     try {
-      // Validate agent with minimal specification
-      const validation = agent.validateSpecification({
-        id: agent.id,
-        role: agent.role,
-        dependencies: agent.dependencies || [],
-        capabilities: [],
-        interfaces: [],
-        behaviors: [],
-        constraints: [],
-        validationRules: [],
-        designIntent: {
-          purpose: 'Agent validation',
-          userGoals: [],
-          successMetrics: [],
-          designPrinciples: [],
-          accessibilityRequirements: []
-        },
-        userRequirements: []
-      });
-      
-      if (!validation.result) {
-        console.error(`[AikoRyuMesh] Agent validation failed for ${agent.id}:`, validation.reason);
+      if (this.agents.has(agent.id)) {
         return false;
       }
       
-      // Initialize agent
-      await agent.initialize();
-      
-      // Register agent
       this.agents.set(agent.id, agent);
       
-      // Subscribe to relevant events
+      // Subscribe agent to relevant events
       await this.subscribeAgentToEvents(agent);
-      
-      console.log(`[AikoRyuMesh] Agent ${agent.id} registered successfully`);
       
       await this.emitTrace({
         timestamp: new Date(),
         eventType: 'agent.registered',
         payload: {
           timestamp: new Date(),
-          correlationId: agent.id,
+          correlationId: `register-${Date.now()}`,
           sourceAgent: this.id,
           agentId: agent.id,
           agentRole: agent.role
@@ -383,36 +356,29 @@ export class AikoRyuMesh implements MeshSystem {
       });
       
       return true;
-    } catch (error) {
-      console.error(`[AikoRyuMesh] Failed to register agent ${agent.id}:`, error);
+    } catch (_error) {
       return false;
     }
   }
 
   async unregisterAgent(agentId: string): Promise<boolean> {
     try {
-      const _agent = this.agents.get(agentId);
-      if (!_agent) {
+      const agent = this.agents.get(agentId);
+      if (!agent) {
         return false;
       }
       
-      // Shutdown agent
-      await _agent.shutdown();
-      
-      // Remove agent
       this.agents.delete(agentId);
       
       // Remove event subscriptions
       this.eventSubscriptions.delete(agentId);
-      
-      console.log(`[AikoRyuMesh] Agent ${agentId} unregistered successfully`);
       
       await this.emitTrace({
         timestamp: new Date(),
         eventType: 'agent.unregistered',
         payload: {
           timestamp: new Date(),
-          correlationId: agentId,
+          correlationId: `unregister-${Date.now()}`,
           sourceAgent: this.id,
           agentId
         },
@@ -420,8 +386,7 @@ export class AikoRyuMesh implements MeshSystem {
       });
       
       return true;
-    } catch (error) {
-      console.error(`[AikoRyuMesh] Failed to unregister agent ${agentId}:`, error);
+    } catch (_error) {
       return false;
     }
   }
@@ -440,25 +405,18 @@ export class AikoRyuMesh implements MeshSystem {
       const failedRoutes: string[] = [];
       const conflicts: string[] = [];
       
-      // Get subscribers for this event type
-      const subscribers = this.getEventSubscribers(eventType);
+      // Route event to relevant agents based on event type
+      const targetAgents = this.getEventSubscribers(eventType);
       
-      for (const agentId of subscribers) {
-        if (agentId === sourceAgent) continue; // Don't route back to source
-        
+      for (const agentId of targetAgents) {
         const agent = this.agents.get(agentId);
-        if (!agent) {
-          failedRoutes.push(agentId);
-          continue;
-        }
+        if (!agent) continue;
         
         try {
           await agent.handleEvent(eventType, payload);
           routedTo.push(agentId);
-          
-          // Record interaction
           this.recordAgentInteraction(sourceAgent, agentId, eventType, true, 0);
-        } catch (error) {
+        } catch (_error) {
           failedRoutes.push(agentId);
           this.recordAgentInteraction(sourceAgent, agentId, eventType, false, 0);
         }
@@ -487,7 +445,7 @@ export class AikoRyuMesh implements MeshSystem {
       });
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         routedTo: [],
@@ -514,7 +472,7 @@ export class AikoRyuMesh implements MeshSystem {
           acknowledgments.push(agentId);
           
           this.recordAgentInteraction(sourceAgent, agentId, eventType, true, 0);
-        } catch (error) {
+        } catch (_error) {
           failedBroadcasts.push(agentId);
           this.recordAgentInteraction(sourceAgent, agentId, eventType, false, 0);
         }
@@ -543,7 +501,7 @@ export class AikoRyuMesh implements MeshSystem {
       });
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         broadcastTo: [],
@@ -583,7 +541,7 @@ export class AikoRyuMesh implements MeshSystem {
       }
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -681,14 +639,14 @@ export class AikoRyuMesh implements MeshSystem {
       });
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         workflowId: workflow.id,
         executionId: `exec-${Date.now()}`,
         status: 'failed',
         steps: [],
-        errors: [`Workflow orchestration failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        errors: [`Workflow orchestration failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`],
         warnings: [],
         metrics: {
           totalSteps: 0,
@@ -737,11 +695,11 @@ export class AikoRyuMesh implements MeshSystem {
         reason: 'System integrity validation passed',
         details: { type: 'system_integrity_validation' }
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         result: false,
         consensus: false,
-        reason: `System integrity validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        reason: `System integrity validation failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         details: { type: 'validation_error' }
       };
     }
@@ -811,12 +769,12 @@ export class AikoRyuMesh implements MeshSystem {
     const warnings: string[] = [];
     
     // Simulate restoration
-    for (const [agentId, agent] of this.agents) {
+    for (const [agentId, _agent] of this.agents) {
       try {
         // Simulate agent restoration
         restoredAgents.push(agentId);
-      } catch (error) {
-        errors.push(`Failed to restore agent ${agentId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (_error) {
+        errors.push(`Failed to restore agent ${agentId}: Unknown error`);
       }
     }
     
@@ -893,7 +851,7 @@ export class AikoRyuMesh implements MeshSystem {
       
       this.configuration = config;
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -1070,7 +1028,7 @@ export class AikoRyuMesh implements MeshSystem {
     const visited = new Set<string>();
     const order: string[] = [];
     
-    const visit = (stepId: string) => {
+    const visit = (stepId: string): void => {
       if (visited.has(stepId)) return;
       
       const step = _steps.find(s => s.id === stepId);

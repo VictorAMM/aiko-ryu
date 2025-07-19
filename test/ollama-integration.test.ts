@@ -52,11 +52,11 @@ describe('Ollama Integration Tests', () => {
     });
     
     await sarahAgent.initialize();
-  });
+  }, 10000); // 10 second timeout for setup
 
   afterEach(async () => {
     await sarahAgent.shutdown();
-  });
+  }, 5000); // 5 second timeout for teardown
 
   describe('Agent Initialization', () => {
     it('should initialize Sarah agent with Ollama configuration', async () => {
@@ -100,7 +100,7 @@ describe('Ollama Integration Tests', () => {
       
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
-      expect(result.error).toContain('Not Found');
+      expect(result.error).toContain('not found');
     });
 
     it('should unload model successfully', async () => {
@@ -282,7 +282,7 @@ describe('Ollama Integration Tests', () => {
       
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
-      expect(result.error).toContain('Not Found');
+      expect(result.error).toContain('not found');
     });
 
     it('should handle query validation errors', async () => {

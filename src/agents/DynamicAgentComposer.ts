@@ -690,14 +690,14 @@ export class DynamicAgentComposer implements DynamicAgentComposerContract {
       id: spec.id,
       role: spec.role,
       dependencies: spec.dependencies,
-      initialize: async () => {},
-      handleEvent: async () => {},
-      shutdown: async () => {},
-      emitTrace: () => {},
-      getStatus: () => ({ status: 'ready', uptime: 0 }),
-      validateSpecification: () => ({ result: true, consensus: true }),
-      generateDesignArtifacts: () => [],
-      trackUserInteraction: () => {}
+      initialize: async (): Promise<void> => {},
+      handleEvent: async (): Promise<void> => {},
+      shutdown: async (): Promise<void> => {},
+      emitTrace: (): void => {},
+      getStatus: (): AgentStatus => ({ status: 'ready', uptime: 0 }),
+      validateSpecification: (): ValidationResult => ({ result: true, consensus: true }),
+      generateDesignArtifacts: (): DesignArtifact[] => [],
+      trackUserInteraction: (): void => {}
     };
   }
 

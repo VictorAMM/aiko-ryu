@@ -1336,7 +1336,7 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
     
     // 6. Check for logical operators consistency
     const logicalOperators = ['and', 'or', 'not'];
-    const hasLogicalOperators = logicalOperators.some(op => condition.toLowerCase().includes(op));
+    const _hasLogicalOperators = logicalOperators.some(op => condition.toLowerCase().includes(op));
     
     // 7. Validate string literals (quoted strings)
     const stringPattern = /"[^"]*"|'[^']*'/g;
@@ -1481,24 +1481,27 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
     path.push(node.id);
     
     switch (node.type) {
-      case 'condition':
+      case 'condition': {
         const conditionMet = this.evaluateCondition(node.condition || '', _context);
         const nextNode = conditionMet ? node.children[0] : node.children[1];
         if (nextNode) {
           return this.traverseDecisionTree(nextNode, _context, path);
         }
         break;
-      case 'decision':
+      }
+      case 'decision': {
         if (node.decision) {
           const result = await this.evaluateDecision(node.decision, _context);
           return result.selectedOption;
         }
         break;
-      case 'action':
+      }
+      case 'action': {
         if (node.action) {
           return this.executeAction(node.action, _context);
         }
         break;
+      }
       case 'terminal':
         return { result: 'terminal', nodeId: node.id };
     }
@@ -2407,7 +2410,7 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
    */
   private getUserExpertiseLevel(userId: string): number {
     // Simulate user expertise assessment
-    const expertiseMap = new Map<string, number>([
+    const _expertiseMap = new Map<string, number>([
       ['expert', 0.95],
       ['intermediate', 0.75],
       ['beginner', 0.55]

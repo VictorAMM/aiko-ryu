@@ -1,5 +1,4 @@
 import { MayaAgent } from '../src/agents/MayaAgent';
-import { ValidationEventPayload, AgentStatus } from '../src/agents/AgentContract';
 
 describe('MayaAgent - Context Manager', () => {
   let maya: MayaAgent;
@@ -391,7 +390,7 @@ describe('MayaAgent - Context Manager', () => {
     it('should handle context propagation events', async () => {
       await maya.initialize();
       
-      const payload: ValidationEventPayload = {
+      const payload = {
         timestamp: new Date(),
         correlationId: 'test-correlation',
         sourceAgent: 'test-agent',
@@ -423,7 +422,7 @@ describe('MayaAgent - Context Manager', () => {
     it('should handle state transition events', async () => {
       await maya.initialize();
       
-      const payload: ValidationEventPayload = {
+      const payload = {
         timestamp: new Date(),
         correlationId: 'test-correlation',
         sourceAgent: 'test-agent',
@@ -457,7 +456,7 @@ describe('MayaAgent - Context Manager', () => {
     it('should handle cultural transformation events', async () => {
       await maya.initialize();
       
-      const payload: ValidationEventPayload = {
+      const payload = {
         timestamp: new Date(),
         correlationId: 'test-correlation',
         sourceAgent: 'test-agent',
@@ -486,7 +485,7 @@ describe('MayaAgent - Context Manager', () => {
     it('should handle unknown events gracefully', async () => {
       await maya.initialize();
       
-      const payload: ValidationEventPayload = {
+      const payload = {
         timestamp: new Date(),
         correlationId: 'test-correlation',
         sourceAgent: 'test-agent',

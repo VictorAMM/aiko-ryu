@@ -1758,7 +1758,7 @@ export class MayaAgent implements MayaAgentContract {
   private findGraphRelationships(source: string, target: string): Relationship[] {
     const relationships: Relationship[] = [];
     
-    for (const [id, relationship] of this.graphRelationships) {
+    for (const [_id, relationship] of this.graphRelationships) {
       if (relationship.source === source && relationship.target === target) {
         relationships.push(relationship);
       }
@@ -1788,7 +1788,7 @@ export class MayaAgent implements MayaAgentContract {
       }
       
       // Find all edges from current node
-      for (const [edgeId, edge] of this.graphEdges) {
+      for (const [_edgeId, edge] of this.graphEdges) {
         if (edge.source === nodeId) {
           traverse(edge.target, currentDepth + 1, newPath);
         }
@@ -1804,7 +1804,7 @@ export class MayaAgent implements MayaAgentContract {
     
     // Analyze node degree patterns
     const nodeDegrees = new Map<string, number>();
-    for (const [edgeId, edge] of this.graphEdges) {
+    for (const [_edgeId, edge] of this.graphEdges) {
       nodeDegrees.set(edge.source, (nodeDegrees.get(edge.source) || 0) + 1);
       nodeDegrees.set(edge.target, (nodeDegrees.get(edge.target) || 0) + 1);
     }
@@ -1824,7 +1824,7 @@ export class MayaAgent implements MayaAgentContract {
     
     // Analyze relationship patterns
     const relationshipTypes = new Map<string, number>();
-    for (const [id, relationship] of this.graphRelationships) {
+    for (const [_id, relationship] of this.graphRelationships) {
       relationshipTypes.set(relationship.type, (relationshipTypes.get(relationship.type) || 0) + 1);
     }
     

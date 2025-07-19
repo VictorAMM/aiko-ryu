@@ -337,7 +337,7 @@ export class AlexAgent implements AlexAgentContract {
       }
 
       // Create DAG instance
-      const dagInstance = await this.createDAG(dag);
+      const _dagInstance = await this.createDAG(dag);
       
       // Start workflow execution
       const executionResult = await this.startWorkflow(dag.id);
@@ -493,9 +493,9 @@ export class AlexAgent implements AlexAgentContract {
     
     for (const dep of dependencies) {
       // In a real implementation, this would query dependency registry
-      const depInfo = this.getDependencyInfo(dep);
-      if (depInfo) {
-        graph.set(dep, depInfo);
+      const _depInfo = this.getDependencyInfo(dep);
+      if (_depInfo) {
+        graph.set(dep, _depInfo);
       }
     }
     
@@ -763,7 +763,7 @@ export class AlexAgent implements AlexAgentContract {
     const errors: string[] = [];
     
     // Check if all dependencies are resolved
-    for (const [depId, depInfo] of graph.entries()) {
+    for (const [depId, _depInfo] of graph.entries()) {
       if (!executionOrder.includes(depId)) {
         unresolvedDeps.push(depId);
         errors.push(`Dependency ${depId} not included in execution order`);
@@ -1878,7 +1878,7 @@ export class AlexAgent implements AlexAgentContract {
     impact: 'isolated' | 'cascading' | 'system-wide';
     recoveryComplexity: number;
   } {
-    const task = this.tasks.get(taskId);
+    const _task = this.tasks.get(taskId);
     const errorMessage = error.message.toLowerCase();
     
     // Determine failure type based on error patterns

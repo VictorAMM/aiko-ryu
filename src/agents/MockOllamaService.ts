@@ -174,7 +174,7 @@ export class MockOllamaService {
     const response = this.generateMockResponse(request.prompt);
     const words = response.split(' ');
     
-    return (async function* () {
+    return (async function* (): AsyncGenerator<MockOllamaResponse> {
       for (let i = 0; i < words.length; i++) {
         await MockOllamaService.getInstance().simulateProcessingDelay(100);
         
@@ -203,7 +203,7 @@ export class MockOllamaService {
   }
 
   private async simulateProcessingDelay(ms: number = 500): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise<void>(resolve => setTimeout(resolve, ms));
   }
 
   isModelLoaded(modelName: string): boolean {

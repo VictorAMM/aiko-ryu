@@ -1,110 +1,126 @@
 /**
- * Mock Ollama Test Setup
+ * Mock Ollama Setup for Testing
  * 
- * Provides utilities to intercept fetch calls and use the mock Ollama service
- * for reliable testing without requiring a real Ollama instance.
+ * Provides mock implementations for Ollama API calls during testing
  */
 
-import { mockOllamaService, MockOllamaResponse, MockOllamaModelsResponse } from '../src/agents/MockOllamaService';
+// Mock fetch globally for the tests
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, no-undef
+(global as any).fetch = jest.fn();
 
-// Store original fetch
-const originalFetch = global.fetch;
+// Mock service state
+let mockServiceState: {
+  isInitialized: boolean;
+  currentModel: string | null;
+  models: string[];
+} = {
+  isInitialized: false,
+  currentModel: null,
+  models: []
+};
 
-export class MockFetchResponse extends Response {
-  constructor(
-    ok: boolean,
-    status: number,
-    statusText: string,
-    private responseBody: any
-  ) {
-    super(JSON.stringify(responseBody), {
-      status,
-      statusText,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  async json(): Promise<any> {
-    return this.responseBody;
-  }
-
-  async text(): Promise<string> {
-    return JSON.stringify(this.responseBody);
-  }
-}
-
-export function setupMockOllama(): void {
-  // Reset mock service state
-  mockOllamaService.reset();
-
-  // Override global fetch
-  global.fetch = async (input: RequestInfo | URL, options?: RequestInit): Promise<MockFetchResponse> => {
-    const url = typeof input === 'string' ? input : input.toString();
-    const urlObj = new URL(url);
-    const path = urlObj.pathname;
-    const method = options?.method || 'GET';
-
-    try {
-      // Handle different Ollama API endpoints
-      if (path === '/api/generate' && method === 'POST') {
-        const body = JSON.parse(options?.body as string);
-        const response = await mockOllamaService.generate({
-          model: body.model,
-          prompt: body.prompt,
-          stream: body.stream || false,
-          options: body.options
-        });
-        
-        return new MockFetchResponse(true, 200, 'OK', response);
-      }
-
-      if (path === '/api/tags' && method === 'GET') {
-        const response = await mockOllamaService.listModels();
-        return new MockFetchResponse(true, 200, 'OK', response);
-      }
-
-      if (path === '/api/pull' && method === 'POST') {
-        const body = JSON.parse(options?.body as string);
-        const response = await mockOllamaService.pull(body.name);
-        
-        if (response.status === 'success') {
-          return new MockFetchResponse(true, 200, 'OK', response);
-        } else {
-          return new MockFetchResponse(false, 404, 'Not Found', response);
-        }
-      }
-
-      // Handle unknown endpoints
-      return new MockFetchResponse(false, 404, 'Not Found', { error: 'Endpoint not found' });
-    } catch (error) {
-      return new MockFetchResponse(false, 500, 'Internal Server Error', { 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      });
-    }
+// Export functions for test setup/teardown
+export const setupMockOllama = () => {
+  mockServiceState = {
+    isInitialized: true,
+    currentModel: null,
+    models: ['llama2', 'mistral']
   };
-}
+};
 
-export function teardownMockOllama(): void {
-  // Restore original fetch
-  global.fetch = originalFetch;
+export const teardownMockOllama = () => {
+  mockServiceState = {
+    isInitialized: false,
+    currentModel: null,
+    models: []
+  };
+};
+
+export const getMockOllamaService = () => ({
+  reset: () => {
+    mockServiceState = {
+      isInitialized: false,
+      currentModel: null,
+      models: []
+    };
+  },
+  getState: () => mockServiceState
+});
+
+// Mock fetch implementation for Ollama API
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+((global as any).fetch as jest.Mock).mockImplementation(async (url: string, options?: any) => {
+  // Simulate processing delay
+  await new Promise(resolve => setTimeout(resolve, 100));
   
-  // Reset mock service
-  mockOllamaService.reset();
-}
-
-export function getMockOllamaService() {
-  return mockOllamaService;
-}
-
-// Jest setup and teardown helpers
-export const mockOllamaSetup = {
-  beforeAll: () => {
-    setupMockOllama();
-  },
-  afterAll: () => {
-    teardownMockOllama();
-  },
-  beforeEach: () => {
-    mockOllamaService.reset();
+  // Mock different Ollama endpoints
+  if (url.includes('/api/generate')) {
+    const body = JSON.parse(options.body);
+    
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        response: `Mock response for: ${body.prompt}`,
+        eval_count: Math.floor(Math.random() * 100) + 50,
+        done: true,
+        model: body.model,
+        created_at: new Date().toISOString(),
+        total_duration: Math.floor(Math.random() * 5000) + 1000,
+        load_duration: Math.floor(Math.random() * 1000) + 100,
+        prompt_eval_count: Math.floor(Math.random() * 20) + 10,
+        prompt_eval_duration: Math.floor(Math.random() * 1000) + 100,
+        eval_duration: Math.floor(Math.random() * 4000) + 500,
+        context: [],
+        timings: {
+          predicted_ms: Math.floor(Math.random() * 4000) + 500,
+          predicted_n: Math.floor(Math.random() * 100) + 50,
+          predicted_per_second: Math.floor(Math.random() * 10) + 5,
+          predicted_per_token_ms: Math.floor(Math.random() * 50) + 10
+        }
+      })
+    };
   }
-}; 
+  
+  if (url.includes('/api/tags')) {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        models: [
+          {
+            name: 'llama2',
+            size: 4000000000,
+            modified_at: '2024-01-01T00:00:00Z',
+            digest: 'sha256:abc123',
+            details: {
+              format: 'gguf',
+              family: 'llama',
+              parameter_size: '7B',
+              quantization_level: 'Q4_0'
+            }
+          },
+          {
+            name: 'mistral',
+            size: 4500000000,
+            modified_at: '2024-01-01T00:00:00Z',
+            digest: 'sha256:def456',
+            details: {
+              format: 'gguf',
+              family: 'mistral',
+              parameter_size: '7B',
+              quantization_level: 'Q4_0'
+            }
+          }
+        ]
+      })
+    };
+  }
+  
+  // Default response for unknown endpoints
+  return {
+    ok: false,
+    status: 404,
+    json: async () => ({ error: 'Not found' })
+  };
+}); 

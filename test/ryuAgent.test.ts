@@ -23,10 +23,13 @@ describe('RyuAgent - Integrity Guardian', () => {
     it('should validate integrity of valid output', async () => {
       await ryu.initialize();
       
+      const testData = { test: 'data' };
+      const dataHash = ryu['calculateHash'](JSON.stringify(testData));
+      
       const validOutput = {
         timestamp: new Date(),
-        data: { test: 'data' },
-        integrityHash: 'abc123'
+        data: testData,
+        integrityHash: dataHash
       };
       
       const result = ryu.validateIntegrity(validOutput);

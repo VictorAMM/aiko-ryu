@@ -134,6 +134,24 @@ const result = validator.validateSyntax(spec);
 - Falha de consenso pode impedir validação de contratos
 - Design intent pode se perder na tradução para código
 
+## 🧪 **Test Files**
+
+### **Unit Tests**
+- `test/dddSdd.test.ts` - DDD/SDD implementation tests
+- `test/agentContract.test.ts` - Agent contract validation tests
+- `test/culturalTransformation.test.ts` - Cultural transformation tests
+
+### **Integration Tests**
+- `test/basic.test.ts` - Basic system integration
+- `test/aikoAgent.test.ts` - Aiko agent integration
+- `test/alexAgent.test.ts` - Alex agent integration
+
+### **Validation Tests**
+- Specification validation tests
+- Design artifact generation tests
+- User research framework tests
+- Code generation from specifications tests
+
 ## Full DDD Implementation
 
 ### 1. Comprehensive User Research
