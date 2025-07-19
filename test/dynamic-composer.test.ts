@@ -1,5 +1,5 @@
 import { DynamicAgentComposer, WorkflowDefinition, AgentMutation, NegotiationProtocol, DAGState, MemoryfulAgentSpec } from '../src/agents/DynamicAgentComposer';
-import { AgentSpecification } from '../src/agents/AgentContract';
+import { AgentSpecification, EventPayload } from '../src/agents/AgentContract';
 
 /**
  * Dynamic Agent Composer Tests
@@ -384,7 +384,7 @@ describe('Dynamic Agent Composer Tests', () => {
         specification: testAgentSpec
       };
 
-      await expect(composer.handleEvent('agent.compose', event as any))
+      await expect(composer.handleEvent('agent.compose', event as EventPayload))
         .resolves.not.toThrow();
     });
 
@@ -393,7 +393,7 @@ describe('Dynamic Agent Composer Tests', () => {
         workflow: testWorkflow
       };
 
-      await expect(composer.handleEvent('workflow.orchestrate', event as any))
+      await expect(composer.handleEvent('workflow.orchestrate', event as EventPayload))
         .resolves.not.toThrow();
     });
 
@@ -403,7 +403,7 @@ describe('Dynamic Agent Composer Tests', () => {
         mutation: testMutation
       };
 
-      await expect(composer.handleEvent('agent.mutate', event as any))
+      await expect(composer.handleEvent('agent.mutate', event as EventPayload))
         .resolves.not.toThrow();
     });
 
@@ -412,7 +412,7 @@ describe('Dynamic Agent Composer Tests', () => {
         protocol: testNegotiationProtocol
       };
 
-      await expect(composer.handleEvent('negotiation.start', event as any))
+      await expect(composer.handleEvent('negotiation.start', event as EventPayload))
         .resolves.not.toThrow();
     });
   });

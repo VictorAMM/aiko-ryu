@@ -1,10 +1,11 @@
-import { AgentContract, TraceEvent, ValidationResult, AgentSpecification, DesignArtifact, UserInteraction, EventPayload, AgentStatus } from './agents/AgentContract';
-import { RyuAgent, RyuAgentContract } from './agents/RyuAgent';
-import { AlexAgent, AlexAgentContract } from './agents/AlexAgent';
-import { MayaAgent, MayaAgentContract } from './agents/MayaAgent';
-import { SarahAgent, SarahAgentContract } from './agents/SarahAgent';
-import { AikoAgent, AikoAgentContract } from './agents/AikoAgent';
-import { DynamicAgentComposer, DynamicAgentComposerContract } from './agents/DynamicAgentComposer';
+import { AgentContract, TraceEvent, ValidationResult, EventPayload, AgentStatus } from './agents/AgentContract';
+import { RyuAgent } from './agents/RyuAgent';
+import { AlexAgent } from './agents/AlexAgent';
+import { MayaAgent } from './agents/MayaAgent';
+import { SarahAgent } from './agents/SarahAgent';
+import { AikoAgent } from './agents/AikoAgent';
+import { DynamicAgentComposer } from './agents/DynamicAgentComposer';
+import { ComplianceAgent } from './agents/ComplianceAgent';
 
 /**
  * AikoRyu Autonomous Mesh System
@@ -332,11 +333,24 @@ export class AikoRyuMesh implements MeshSystem {
 
   async registerAgent(agent: AgentContract): Promise<boolean> {
     try {
-      // Validate agent
+      // Validate agent with minimal specification
       const validation = agent.validateSpecification({
         id: agent.id,
         role: agent.role,
-        dependencies: agent.dependencies || []
+        dependencies: agent.dependencies || [],
+        capabilities: [],
+        interfaces: [],
+        behaviors: [],
+        constraints: [],
+        validationRules: [],
+        designIntent: {
+          purpose: 'Agent validation',
+          userGoals: [],
+          successMetrics: [],
+          designPrinciples: [],
+          accessibilityRequirements: []
+        },
+        userRequirements: []
       });
       
       if (!validation.result) {
@@ -377,13 +391,13 @@ export class AikoRyuMesh implements MeshSystem {
 
   async unregisterAgent(agentId: string): Promise<boolean> {
     try {
-      const agent = this.agents.get(agentId);
-      if (!agent) {
+      const _agent = this.agents.get(agentId);
+      if (!_agent) {
         return false;
       }
       
       // Shutdown agent
-      await agent.shutdown();
+      await _agent.shutdown();
       
       // Remove agent
       this.agents.delete(agentId);
@@ -552,7 +566,7 @@ export class AikoRyuMesh implements MeshSystem {
       }
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -755,7 +769,7 @@ export class AikoRyuMesh implements MeshSystem {
       
       workflows.push({
         workflowId,
-        status: execution?.status || 'created',
+        status: (execution?.status === 'started' ? 'running' : execution?.status) || 'created',
         progress: execution ? (execution.metrics.completedSteps / execution.metrics.totalSteps) * 100 : 0,
         completedSteps: execution?.metrics.completedSteps || 0,
         totalSteps: execution?.metrics.totalSteps || workflow.steps.length,
@@ -806,12 +820,12 @@ export class AikoRyuMesh implements MeshSystem {
       }
     }
     
-    for (const [workflowId, workflow] of this.workflows) {
+    for (const [workflowId, _workflow] of this.workflows) {
       try {
         // Simulate workflow restoration
         restoredWorkflows.push(workflowId);
-      } catch (error) {
-        errors.push(`Failed to restore workflow ${workflowId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (_error) {
+        errors.push(`Failed to restore workflow ${workflowId}: Unknown error`);
       }
     }
     
@@ -928,12 +942,13 @@ export class AikoRyuMesh implements MeshSystem {
   private async initializeDefaultAgents(): Promise<void> {
     // Initialize core agents
     const agents: AgentContract[] = [
-      new AikoAgent(),
+      new AikoAgent('aiko'),
       new RyuAgent(),
       new AlexAgent(),
       new MayaAgent(),
       new SarahAgent(),
-      new DynamicAgentComposer()
+      new DynamicAgentComposer(),
+      new ComplianceAgent('compliance')
     ];
     
     for (const agent of agents) {
@@ -949,7 +964,8 @@ export class AikoRyuMesh implements MeshSystem {
       'alex': ['workflow.start', 'task.execute', 'task.complete'],
       'maya': ['context.propagate', 'state.transition', 'cultural.transformation.start'],
       'sarah': ['knowledge.retrieve', 'response.generate', 'model.load'],
-      'dynamic-composer': ['agent.compose', 'workflow.orchestrate', 'negotiation.start']
+      'dynamic-composer': ['agent.compose', 'workflow.orchestrate', 'negotiation.start'],
+      'compliance': ['compliance.check', 'policy.validate', 'violation.report', 'risk.assess', 'report.generate', 'policy.update']
     };
     
     for (const [agentId, eventTypes] of Object.entries(subscriptions)) {
@@ -970,7 +986,8 @@ export class AikoRyuMesh implements MeshSystem {
       'DAG Orchestrator': ['workflow.start', 'task.execute'],
       'Context Manager': ['context.propagate', 'state.transition'],
       'RAG Engine': ['knowledge.retrieve', 'response.generate'],
-      'Dynamic Composer': ['agent.compose', 'workflow.orchestrate']
+      'Dynamic Composer': ['agent.compose', 'workflow.orchestrate'],
+      'Regulatory Compliance Engine': ['compliance.check', 'policy.validate', 'violation.report', 'risk.assess', 'report.generate', 'policy.update']
     };
     
     return eventTypeMap[role] || [];
@@ -1048,7 +1065,7 @@ export class AikoRyuMesh implements MeshSystem {
     }
   }
 
-  private calculateExecutionOrder(steps: WorkflowStep[]): string[] {
+  private calculateExecutionOrder(_steps: WorkflowStep[]): string[] {
     // Simple topological sort for dependency resolution
     const visited = new Set<string>();
     const order: string[] = [];
@@ -1056,7 +1073,7 @@ export class AikoRyuMesh implements MeshSystem {
     const visit = (stepId: string) => {
       if (visited.has(stepId)) return;
       
-      const step = steps.find(s => s.id === stepId);
+      const step = _steps.find(s => s.id === stepId);
       if (!step) return;
       
       for (const dep of step.dependencies) {
@@ -1067,14 +1084,14 @@ export class AikoRyuMesh implements MeshSystem {
       order.push(stepId);
     };
     
-    for (const step of steps) {
+    for (const step of _steps) {
       visit(step.id);
     }
     
     return order;
   }
 
-  private async executeWorkflowStep(step: WorkflowStep, workflow: MeshWorkflow): Promise<StepExecutionResult> {
+  private async executeWorkflowStep(step: WorkflowStep, _workflow: MeshWorkflow): Promise<StepExecutionResult> {
     const startTime = new Date();
     let success = false;
     let output: unknown = null;

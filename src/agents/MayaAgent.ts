@@ -66,6 +66,7 @@ export interface ContextResult {
   conflicts: ContextConflict[];
   enrichments: ContextEnrichment[];
   timestamp: Date;
+  error?: string;
 }
 
 export interface ContextConflict {
@@ -200,6 +201,7 @@ export interface ContextInsight {
   description: string;
   confidence: number;
   data: Record<string, unknown>;
+  recommendations?: string[];
 }
 
 export interface ContextSnapshot {
@@ -312,9 +314,11 @@ export class MayaAgent implements MayaAgentContract {
       case 'context.propagate':
         await this.handleContextPropagation(payload as unknown as { context: ContextSlice });
         break;
-      case 'state.transition':
-        await this.handleStateTransition(payload as unknown as { fromState: string; toState: string; context: ContextSlice });
+      case 'state.transition': {
+        const statePayload = payload as unknown as { fromState: string; toState: string; context: ContextSlice };
+        await this.handleStateTransition(statePayload.fromState, statePayload.toState, statePayload.context);
         break;
+      }
       case 'cultural.transformation.start':
         await this.handleCulturalTransformationStart(payload as unknown as { transformation: CulturalTransformation });
         break;
@@ -404,14 +408,55 @@ export class MayaAgent implements MayaAgentContract {
         enrichments,
         timestamp: new Date()
       };
-    } catch (error) {
+    } catch (_error) {
+      // Enhanced error handling with circuit breaker pattern
+      await this.emitTrace({
+        timestamp: new Date(),
+        eventType: 'context.propagation.failed',
+        payload: {
+          timestamp: new Date(),
+          correlationId: context.id,
+          sourceAgent: this.id,
+          error: _error instanceof Error ? _error.message : String(_error),
+          contextId: context.id
+        },
+        metadata: { sourceAgent: this.id }
+      });
+
+      // Implement circuit breaker pattern
+      const circuitBreakerState = this.getCircuitBreakerState('context-propagation');
+      if (circuitBreakerState === 'open') {
+        return {
+          success: false,
+          contextId: context.id,
+          propagatedTo: [],
+          conflicts: [],
+          enrichments: [],
+          timestamp: new Date(),
+          error: 'Circuit breaker open - context propagation temporarily disabled'
+        };
+      }
+
+      // Implement retry logic with exponential backoff
+      const retryResult = await this.retryWithBackoff(async () => {
+        return await this.propagateContextWithRetry(context);
+      }, 3, 1000);
+
+      if (retryResult.success && retryResult.result) {
+        return retryResult.result;
+      }
+
+      // Update circuit breaker on failure
+      this.updateCircuitBreaker('context-propagation', false);
+
       return {
         success: false,
         contextId: context.id,
         propagatedTo: [],
         conflicts: [],
         enrichments: [],
-        timestamp: new Date()
+        timestamp: new Date(),
+        error: `Context propagation failed after retries: ${_error instanceof Error ? _error.message : String(_error)}`
       };
     }
   }
@@ -481,8 +526,38 @@ export class MayaAgent implements MayaAgentContract {
       });
       
       return mergedContext;
-    } catch (error) {
-      throw new Error(`Context merging failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (_error) {
+      // Enhanced error handling for context merging
+      await this.emitTrace({
+        timestamp: new Date(),
+        eventType: 'context.merging.failed',
+        payload: {
+          timestamp: new Date(),
+          correlationId: `merge-${Date.now()}`,
+          sourceAgent: this.id,
+          error: _error instanceof Error ? _error.message : String(_error),
+          contextCount: contexts.length
+        },
+        metadata: { sourceAgent: this.id }
+      });
+
+      // Implement graceful degradation
+      const fallbackMergedContext: MergedContext = {
+        id: `fallback-merged-${Date.now()}`,
+        contexts: contexts.slice(0, 1), // Use only first context as fallback
+        mergedData: contexts[0]?.data || {},
+        conflicts: [{
+          id: `fallback-conflict-${Date.now()}`,
+          type: 'data',
+          description: 'Fallback merge due to error',
+          resolution: 'override',
+          affectedAgents: contexts.map(c => c.agentId)
+        }],
+        confidence: 0.3, // Low confidence for fallback
+        timestamp: new Date()
+      };
+
+      return fallbackMergedContext;
     }
   }
 
@@ -599,14 +674,39 @@ export class MayaAgent implements MayaAgentContract {
         conflicts,
         enrichments
       };
-    } catch (error) {
+    } catch (_error) {
+      // Enhanced error handling for state transitions
+      await this.emitTrace({
+        timestamp: new Date(),
+        eventType: 'state.transition.failed',
+        payload: {
+          timestamp: new Date(),
+          correlationId: context.id,
+          sourceAgent: this.id,
+          error: _error instanceof Error ? _error.message : String(_error),
+          fromState,
+          toState,
+          contextId: context.id
+        },
+        metadata: { sourceAgent: this.id }
+      });
+
+      // Implement state transition fallback
+      const fallbackConflicts: ContextConflict[] = [{
+        id: `transition-fallback-${Date.now()}`,
+        type: 'semantic',
+        description: 'State transition failed, using fallback',
+        resolution: 'ignore',
+        affectedAgents: [context.agentId]
+      }];
+
       return {
         success: false,
         fromState,
         toState,
         contextId: context.id,
         transitionTime: 0,
-        conflicts: [],
+        conflicts: fallbackConflicts,
         enrichments: []
       };
     }
@@ -683,20 +783,37 @@ export class MayaAgent implements MayaAgentContract {
         metrics,
         insights
       };
-    } catch (error) {
+    } catch (_error) {
+      // Enhanced error handling for cultural transformation
+      await this.emitTrace({
+        timestamp: new Date(),
+        eventType: 'cultural.transformation.failed',
+        payload: {
+          timestamp: new Date(),
+          correlationId: transformation.id,
+          sourceAgent: this.id,
+          error: _error instanceof Error ? _error.message : String(_error),
+          transformationId: transformation.id
+        },
+        metadata: { sourceAgent: this.id }
+      });
+
+      // Implement graceful degradation for cultural transformation
+      const fallbackMetrics: CulturalMetrics = {
+        timestamp: new Date(),
+        metrics: [],
+        overallProgress: 0,
+        successRate: 0,
+        participantSatisfaction: 0
+      };
+
       return {
         success: false,
         transformationId: transformation.id,
         participants: [],
         completedObjectives: [],
         pendingObjectives: transformation.objectives,
-        metrics: {
-          timestamp: new Date(),
-          metrics: [],
-          overallProgress: 0,
-          successRate: 0,
-          participantSatisfaction: 0
-        },
+        metrics: fallbackMetrics,
         insights: []
       };
     }
@@ -890,7 +1007,22 @@ export class MayaAgent implements MayaAgentContract {
         } else {
           failedRoutes.push(agentId);
         }
-      } catch (error) {
+      } catch (_error) {
+        // Enhanced error handling for context routing
+        await this.emitTrace({
+          timestamp: new Date(),
+          eventType: 'context.routing.failed',
+          payload: {
+            timestamp: new Date(),
+            correlationId: context.id,
+            sourceAgent: this.id,
+            error: _error instanceof Error ? _error.message : String(_error),
+            targetAgent: agentId,
+            contextId: context.id
+          },
+          metadata: { sourceAgent: this.id }
+        });
+        
         failedRoutes.push(agentId);
       }
     }
@@ -922,7 +1054,22 @@ export class MayaAgent implements MayaAgentContract {
         } else {
           failedDistributions.push(agentId);
         }
-      } catch (error) {
+      } catch (_error) {
+        // Enhanced error handling for context distribution
+        await this.emitTrace({
+          timestamp: new Date(),
+          eventType: 'context.distribution.failed',
+          payload: {
+            timestamp: new Date(),
+            correlationId: context.id,
+            sourceAgent: this.id,
+            error: _error instanceof Error ? _error.message : String(_error),
+            targetAgent: agentId,
+            contextId: context.id
+          },
+          metadata: { sourceAgent: this.id }
+        });
+        
         failedDistributions.push(agentId);
       }
     }
@@ -992,25 +1139,118 @@ export class MayaAgent implements MayaAgentContract {
   }
 
   generateDesignArtifacts(): DesignArtifact[] {
-    return [
-      {
-        id: 'maya-context-manager',
+    const artifacts: DesignArtifact[] = [];
+
+    // Core context manager specification
+    artifacts.push({
+      id: 'maya-context-manager',
+      type: 'specification',
+      content: {
         type: 'specification',
-        content: {
-          type: 'specification',
-          data: {
-            role: 'Context Manager',
-            capabilities: ['propagateContext', 'mergeContexts', 'validateContext'],
-            interfaces: ['MayaAgentContract']
-          },
-          metadata: { version: '1.0.0' },
-          schema: 'maya-agent-spec'
+        data: {
+          role: 'Context Manager',
+          capabilities: ['propagateContext', 'mergeContexts', 'validateContext'],
+          interfaces: ['MayaAgentContract']
         },
-        version: '1.0.0',
-        createdAt: new Date(),
-        validatedBy: [this.id]
-      }
-    ];
+        metadata: { version: '1.0.0' },
+        schema: 'maya-agent-spec'
+      },
+      version: '1.0.0',
+      createdAt: new Date(),
+      validatedBy: [this.id]
+    });
+
+    // Knowledge graph operations specification
+    artifacts.push({
+      id: 'maya-knowledge-graph',
+      type: 'specification',
+      content: {
+        type: 'specification',
+        data: {
+          diagramType: 'uml-class',
+          title: 'Knowledge Graph Operations',
+          content: `
+            class KnowledgeGraph {
+              -nodes: Map<string, GraphNode>
+              -edges: Map<string, GraphEdge>
+              -relationships: Map<string, Relationship>
+              +addNode(node: GraphNode): void
+              +addEdge(edge: GraphEdge): void
+              +findRelationships(source: string, target: string): Relationship[]
+              +traverseGraph(startNode: string, depth: number): GraphPath[]
+              +analyzePatterns(): GraphPattern[]
+            }
+
+            class GraphNode {
+              +id: string
+              +type: string
+              +data: Record<string, unknown>
+              +metadata: NodeMetadata
+            }
+
+            class GraphEdge {
+              +id: string
+              +source: string
+              +target: string
+              +type: string
+              +weight: number
+              +metadata: EdgeMetadata
+            }
+
+            class Relationship {
+              +id: string
+              +type: 'dependency' | 'influence' | 'conflict' | 'enrichment'
+              +strength: number
+              +confidence: number
+              +metadata: Record<string, unknown>
+            }
+          `
+        },
+        metadata: {
+          version: '1.0',
+          generatedAt: new Date().toISOString(),
+          agent: this.id
+        },
+        schema: 'uml-class-diagram'
+      },
+      version: '1.0',
+      createdAt: new Date(),
+      validatedBy: []
+    });
+
+    // Advanced context operations sequence diagram
+    artifacts.push({
+      id: 'maya-context-operations',
+      type: 'specification',
+      content: {
+        type: 'specification',
+        data: {
+          diagramType: 'uml-sequence',
+          title: 'Advanced Context Operations Flow',
+          content: `
+            Client -> MayaAgent: propagateContext(context)
+            MayaAgent -> CircuitBreaker: checkState('context-propagation')
+            MayaAgent -> KnowledgeGraph: addNode(context)
+            MayaAgent -> KnowledgeGraph: findRelationships(context.id)
+            MayaAgent -> ContextEnricher: enrichContext(context)
+            MayaAgent -> ConflictDetector: detectConflicts(context)
+            MayaAgent -> TargetAgents: routeContext(context)
+            MayaAgent -> Client: ContextResult
+          `
+        },
+        metadata: {
+          version: '1.0',
+          generatedAt: new Date().toISOString(),
+          agent: this.id
+        },
+        schema: 'uml-sequence-diagram'
+      },
+      version: '1.0',
+      createdAt: new Date(),
+      validatedBy: []
+    });
+
+    return artifacts;
   }
 
   trackUserInteraction(_interaction: UserInteraction): void {
@@ -1145,9 +1385,9 @@ export class MayaAgent implements MayaAgentContract {
     return enrichments;
   }
 
-  private async generateSemanticEnrichment(context: ContextSlice): Promise<ContextEnrichment | null> {
+  private async generateSemanticEnrichment(_context: ContextSlice): Promise<ContextEnrichment | null> {
     // Extract semantic information from context
-    const semanticTags = this.extractSemanticTags(context);
+          const semanticTags = this.extractSemanticTags(_context);
     
     if (semanticTags.length > 0) {
       return {
@@ -1161,8 +1401,8 @@ export class MayaAgent implements MayaAgentContract {
     return null;
   }
 
-  private async generateTemporalEnrichment(context: ContextSlice): Promise<ContextEnrichment | null> {
-    const temporalContext = this.extractTemporalContext(context);
+  private async generateTemporalEnrichment(_context: ContextSlice): Promise<ContextEnrichment | null> {
+    const temporalContext = this.extractTemporalContext(_context);
     
     return {
       type: 'temporal',
@@ -1172,12 +1412,12 @@ export class MayaAgent implements MayaAgentContract {
     };
   }
 
-  private async generateSpatialEnrichment(context: ContextSlice): Promise<ContextEnrichment | null> {
+  private async generateSpatialEnrichment(_context: ContextSlice): Promise<ContextEnrichment | null> {
     // Spatial enrichment would analyze spatial relationships
     return null;
   }
 
-  private async generateRelationalEnrichment(context: ContextSlice): Promise<ContextEnrichment | null> {
+  private async generateRelationalEnrichment(_context: ContextSlice): Promise<ContextEnrichment | null> {
     // Relational enrichment would analyze relationships between contexts
     return null;
   }
@@ -1302,12 +1542,12 @@ export class MayaAgent implements MayaAgentContract {
     return (contextConfidence + patternConfidence + insightConfidence) / 3;
   }
 
-  private async simulateContextRouting(context: ContextSlice, agentId: string): Promise<boolean> {
+  private async simulateContextRouting(_context: ContextSlice, _agentId: string): Promise<boolean> {
     // Simulate routing success/failure
     return Math.random() > 0.1; // 90% success rate
   }
 
-  private async simulateContextDistribution(context: ContextSlice, agentId: string): Promise<boolean> {
+  private async simulateContextDistribution(_context: ContextSlice, _agentId: string): Promise<boolean> {
     // Simulate distribution success/failure
     return Math.random() > 0.05; // 95% success rate
   }
@@ -1331,7 +1571,7 @@ export class MayaAgent implements MayaAgentContract {
 
   private evaluateFilterCriteria(value: unknown, criteria: Record<string, unknown>): boolean {
     // Simple filter evaluation
-    for (const [criterion, expectedValue] of Object.entries(criteria)) {
+    for (const [_criterion, expectedValue] of Object.entries(criteria)) {
       if (value !== expectedValue) {
         return false;
       }
@@ -1380,9 +1620,7 @@ export class MayaAgent implements MayaAgentContract {
     await this.propagateContext(payload.context);
   }
 
-  private async handleStateTransition(payload: { fromState: string; toState: string; context: ContextSlice }): Promise<void> {
-    await this.handleStateTransition(payload.fromState, payload.toState, payload.context);
-  }
+
 
   private async handleCulturalTransformationStart(payload: { transformation: CulturalTransformation }): Promise<void> {
     await this.initiateCulturalTransformation(payload.transformation);
@@ -1395,4 +1633,290 @@ export class MayaAgent implements MayaAgentContract {
   private async handleContextSynthesis(payload: { contexts: ContextSlice[] }): Promise<void> {
     await this.synthesizeContext(payload.contexts);
   }
+
+  // Enhanced error handling and resilience methods
+  private circuitBreakers: Map<string, { state: 'closed' | 'open' | 'half-open'; failureCount: number; lastFailureTime: number; threshold: number }> = new Map();
+
+  private getCircuitBreakerState(operation: string): 'closed' | 'open' | 'half-open' {
+    const breaker = this.circuitBreakers.get(operation);
+    if (!breaker) {
+      this.circuitBreakers.set(operation, { state: 'closed', failureCount: 0, lastFailureTime: 0, threshold: 5 });
+      return 'closed';
+    }
+
+    // Check if circuit breaker should transition to half-open
+    if (breaker.state === 'open' && Date.now() - breaker.lastFailureTime > 30000) {
+      breaker.state = 'half-open';
+    }
+
+    return breaker.state;
+  }
+
+  private updateCircuitBreaker(operation: string, success: boolean): void {
+    const breaker = this.circuitBreakers.get(operation);
+    if (!breaker) return;
+
+    if (success) {
+      breaker.failureCount = 0;
+      breaker.state = 'closed';
+    } else {
+      breaker.failureCount++;
+      breaker.lastFailureTime = Date.now();
+      
+      if (breaker.failureCount >= breaker.threshold) {
+        breaker.state = 'open';
+      }
+    }
+  }
+
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number,
+    baseDelay: number
+  ): Promise<{ success: boolean; result?: T; error?: string }> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        return { success: true, result };
+      } catch (error) {
+        if (attempt === maxRetries) {
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : String(error) 
+          };
+        }
+        
+        // Exponential backoff with jitter
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    return { success: false, error: 'Max retries exceeded' };
+  }
+
+  private async propagateContextWithRetry(context: ContextSlice): Promise<ContextResult> {
+    // Simplified retry implementation for context propagation
+    const targetAgents = this.determineTargetAgents(context);
+    const conflicts = this.detectContextConflicts(context);
+    const enrichments = await this.generateContextEnrichments(context);
+    const propagatedTo = await this.simulateContextPropagation(context, targetAgents);
+
+    return {
+      success: true,
+      contextId: context.id,
+      propagatedTo,
+      conflicts,
+      enrichments,
+      timestamp: new Date()
+    };
+  }
+
+  // Advanced knowledge graph operations
+  private knowledgeGraph: Map<string, GraphNode> = new Map();
+  private graphEdges: Map<string, GraphEdge> = new Map();
+  private graphRelationships: Map<string, Relationship> = new Map();
+
+  private addGraphNode(node: GraphNode): void {
+    this.knowledgeGraph.set(node.id, node);
+    
+    // Emit trace for graph operations
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'knowledge.graph.node.added',
+      payload: {
+        timestamp: new Date(),
+        correlationId: node.id,
+        sourceAgent: this.id,
+        nodeId: node.id,
+        nodeType: node.type
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private addGraphEdge(edge: GraphEdge): void {
+    this.graphEdges.set(edge.id, edge);
+    
+    // Emit trace for graph operations
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'knowledge.graph.edge.added',
+      payload: {
+        timestamp: new Date(),
+        correlationId: edge.id,
+        sourceAgent: this.id,
+        edgeId: edge.id,
+        sourceNode: edge.source,
+        targetNode: edge.target,
+        edgeType: edge.type
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private findGraphRelationships(source: string, target: string): Relationship[] {
+    const relationships: Relationship[] = [];
+    
+    for (const [id, relationship] of this.graphRelationships) {
+      if (relationship.source === source && relationship.target === target) {
+        relationships.push(relationship);
+      }
+    }
+    
+    return relationships;
+  }
+
+  private traverseGraph(startNode: string, depth: number): GraphPath[] {
+    const paths: GraphPath[] = [];
+    const visited = new Set<string>();
+    
+    const traverse = (nodeId: string, currentDepth: number, currentPath: string[]): void => {
+      if (currentDepth > depth || visited.has(nodeId)) return;
+      
+      visited.add(nodeId);
+      const newPath = [...currentPath, nodeId];
+      
+      if (currentDepth === depth) {
+        paths.push({
+          id: `path-${Date.now()}-${Math.random()}`,
+          nodes: newPath,
+          depth: currentDepth,
+          confidence: this.calculatePathConfidence(newPath)
+        });
+        return;
+      }
+      
+      // Find all edges from current node
+      for (const [edgeId, edge] of this.graphEdges) {
+        if (edge.source === nodeId) {
+          traverse(edge.target, currentDepth + 1, newPath);
+        }
+      }
+    };
+    
+    traverse(startNode, 0, []);
+    return paths;
+  }
+
+  private analyzeGraphPatterns(): GraphPattern[] {
+    const patterns: GraphPattern[] = [];
+    
+    // Analyze node degree patterns
+    const nodeDegrees = new Map<string, number>();
+    for (const [edgeId, edge] of this.graphEdges) {
+      nodeDegrees.set(edge.source, (nodeDegrees.get(edge.source) || 0) + 1);
+      nodeDegrees.set(edge.target, (nodeDegrees.get(edge.target) || 0) + 1);
+    }
+    
+    // Find high-degree nodes (hubs)
+    for (const [nodeId, degree] of nodeDegrees) {
+      if (degree > 3) {
+        patterns.push({
+          id: `pattern-hub-${nodeId}`,
+          type: 'hub',
+          description: `Node ${nodeId} is a hub with degree ${degree}`,
+          confidence: 0.8,
+          data: { nodeId, degree }
+        });
+      }
+    }
+    
+    // Analyze relationship patterns
+    const relationshipTypes = new Map<string, number>();
+    for (const [id, relationship] of this.graphRelationships) {
+      relationshipTypes.set(relationship.type, (relationshipTypes.get(relationship.type) || 0) + 1);
+    }
+    
+    for (const [type, count] of relationshipTypes) {
+      if (count > 2) {
+        patterns.push({
+          id: `pattern-relationship-${type}`,
+          type: 'relationship',
+          description: `Common relationship type: ${type} (${count} occurrences)`,
+          confidence: 0.7,
+          data: { type, count }
+        });
+      }
+    }
+    
+    return patterns;
+  }
+
+  private calculatePathConfidence(path: string[]): number {
+    // Calculate confidence based on path length and node types
+    const baseConfidence = 0.5;
+    const lengthBonus = Math.min(0.3, path.length * 0.1);
+    const typeBonus = this.calculateTypeConfidence(path);
+    
+    return Math.min(1.0, baseConfidence + lengthBonus + typeBonus);
+  }
+
+  private calculateTypeConfidence(path: string[]): number {
+    let confidence = 0;
+    
+    for (const nodeId of path) {
+      const node = this.knowledgeGraph.get(nodeId);
+      if (node) {
+        // Higher confidence for certain node types
+        switch (node.type) {
+          case 'context':
+            confidence += 0.1;
+            break;
+          case 'agent':
+            confidence += 0.05;
+            break;
+          case 'relationship':
+            confidence += 0.08;
+            break;
+          default:
+            confidence += 0.02;
+        }
+      }
+    }
+    
+    return confidence;
+  }
+}
+
+// Graph data structures for MayaAgent
+interface GraphNode {
+  id: string;
+  type: string;
+  data: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+}
+
+interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  weight: number;
+  metadata: Record<string, unknown>;
+}
+
+interface Relationship {
+  id: string;
+  source: string;
+  target: string;
+  type: 'dependency' | 'influence' | 'conflict' | 'enrichment';
+  strength: number;
+  confidence: number;
+  metadata: Record<string, unknown>;
+}
+
+interface GraphPath {
+  id: string;
+  nodes: string[];
+  depth: number;
+  confidence: number;
+}
+
+interface GraphPattern {
+  id: string;
+  type: string;
+  description: string;
+  confidence: number;
+  data: Record<string, unknown>;
 } 

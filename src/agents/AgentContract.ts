@@ -10,6 +10,11 @@ export interface SpecificationEventPayload extends BaseEventPayload {
   action: 'validate' | 'create' | 'update' | 'delete';
   specification?: AgentSpecification;
   validationResult?: ValidationResult;
+  dagId?: string;
+  workflowId?: string;
+  edgeCount?: number;
+  taskName?: string;
+  taskType?: string;
 }
 
 export interface DesignEventPayload extends BaseEventPayload {
@@ -27,12 +32,31 @@ export interface UserInteractionEventPayload extends BaseEventPayload {
   context: Record<string, string | number | boolean>;
   outcome: 'success' | 'failure' | 'partial';
   feedback?: string;
+  taskId?: string;
 }
 
 export interface SystemEventPayload extends BaseEventPayload {
   eventType: 'initialize' | 'shutdown' | 'error' | 'status-change';
   status?: AgentStatus;
   error?: Error;
+  agentId?: string;
+  metricCount?: number;
+  contextCount?: number;
+  contextId?: string;
+  fromState?: string;
+  toState?: string;
+  transformationId?: string;
+  result?: unknown;
+  taskId?: string;
+  agentRole?: string;
+  overallPerformance?: number;
+  propagatedTo?: string;
+  conflictCount?: number;
+  transitionTime?: number;
+  participantCount?: number;
+  overallProgress?: number;
+  relationshipCount?: number;
+  violationCount?: number;
 }
 
 export interface ValidationEventPayload extends BaseEventPayload {
@@ -41,6 +65,13 @@ export interface ValidationEventPayload extends BaseEventPayload {
   input: Record<string, unknown>;
   result: ValidationResult;
   context: string;
+  ruleName?: string;
+  decisionId?: string;
+  conditionMet?: boolean;
+  actionExecuted?: string;
+  selectedOption?: string;
+  category?: string;
+  decisionName?: string;
 }
 
 export interface BackupEventPayload extends BaseEventPayload {
@@ -48,6 +79,9 @@ export interface BackupEventPayload extends BaseEventPayload {
   size?: number;
   operation: 'store' | 'retrieve' | 'delete' | 'validate';
   content?: string;
+  metadataId?: string;
+  oldHash?: string;
+  newHash?: string;
 }
 
 export interface SnapshotEventPayload extends BaseEventPayload {
@@ -55,6 +89,16 @@ export interface SnapshotEventPayload extends BaseEventPayload {
   nodeCount?: number;
   operation: 'create' | 'restore' | 'validate' | 'delete';
   result?: boolean;
+  agentCount?: number;
+  restoredAgentCount?: number;
+  enforcedCount?: number;
+  reason?: string;
+  success?: boolean;
+  overallStatus?: string;
+  taskId?: string;
+  validationStatus?: string;
+  errorCount?: number;
+  checkCount?: number;
 }
 
 export interface CulturalTransformationEventPayload extends BaseEventPayload {
@@ -119,7 +163,8 @@ export type EventPayload =
   | DeterministicReplayEventPayload
   | ConsistencyVerificationEventPayload
   | StateReconstructionEventPayload
-  | AuditTrailEventPayload;
+  | AuditTrailEventPayload
+  | Record<string, unknown>; // Allow flexible payloads for backward compatibility
 
 export interface AgentContract {
   readonly id: string;
@@ -152,7 +197,7 @@ export interface TraceEvent {
 }
 
 export interface AgentStatus {
-  status: 'initializing' | 'ready' | 'error' | 'shutting-down' | 'terminated';
+  status: 'initializing' | 'ready' | 'error' | 'shutting-down' | 'terminated' | 'running' | 'completed' | 'failed' | 'cancelled' | 'started';
   lastEvent?: string;
   lastTrace?: TraceEvent;
   uptime: number;
@@ -163,7 +208,7 @@ export interface ValidationResult {
   consensus: boolean;
   reason?: string;
   escalatedTo?: string;
-  details?: Record<string, string | number | boolean>;
+  details?: Record<string, string | number | boolean | string[]>;
 }
 
 // DDD/SDD Enhanced Interfaces
@@ -349,4 +394,14 @@ export interface Metric {
   target: number;
   unit: string;
   description: string;
+}
+
+export interface ContextInsight {
+  id: string;
+  type: 'correlation' | 'prediction' | 'anomaly' | 'pattern';
+  confidence: number;
+  description: string;
+  data: Record<string, unknown>;
+  recommendations?: string[];
+  title?: string;
 } 

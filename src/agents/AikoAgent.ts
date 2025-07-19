@@ -1,4 +1,5 @@
 // src/agents/AikoAgent.ts
+import console from 'console';
 import { 
   AgentContract, 
   TraceEvent, 
@@ -13,6 +14,8 @@ import {
   EventPayload,
   ValidationInput
 } from './AgentContract';
+
+export type AikoAgentContract = AgentContract;
 
 export class AikoAgent implements AgentContract {
   readonly id: string;
@@ -74,25 +77,25 @@ export class AikoAgent implements AgentContract {
     switch (eventType) {
       case 'specification.validate':
         if ('specificationId' in payload && 'specification' in payload) {
-          await this.handleSpecificationValidation(payload.specification!);
+          await this.handleSpecificationValidation(payload.specification as AgentSpecification);
         }
         break;
       case 'design.artifact.generate':
         if ('designId' in payload && 'userContext' in payload) {
-          await this.handleDesignArtifactGeneration(payload.userContext!);
+          await this.handleDesignArtifactGeneration(payload.userContext as UserInteraction);
         }
         break;
       case 'user.interaction.track':
         if ('interactionId' in payload && 'userId' in payload) {
           await this.handleUserInteractionTracking({
-            id: payload.interactionId,
-            userId: payload.userId,
-            sessionId: payload.sessionId,
-            action: payload.action,
-            context: payload.context,
-            timestamp: payload.timestamp,
-            outcome: payload.outcome,
-            feedback: payload.feedback
+            id: payload.interactionId as string,
+            userId: payload.userId as string,
+            sessionId: payload.sessionId as string,
+            action: payload.action as string,
+            context: payload.context as Record<string, string | number | boolean>,
+            timestamp: payload.timestamp as Date,
+            outcome: payload.outcome as 'success' | 'failure' | 'partial',
+            feedback: payload.feedback as string | undefined
           });
         }
         break;
