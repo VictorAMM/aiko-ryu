@@ -1,13 +1,5 @@
 // src/specifications/SpecificationEngine.ts
-import { 
-  AgentSpecification, 
-  TraceEvent,
-  ValidationResult, 
-  ValidationRule,
-  EventPayload,
-  SpecificationEventPayload,
-  SystemEventPayload
-} from '../agents/AgentContract';
+import { AgentContract, AgentStatus, ValidationResult, AgentSpecification, UserInteraction, TraceEvent, DesignArtifact, EventPayload, SpecificationEventPayload, SystemEventPayload, ValidationRule } from '../agents/AgentContract';
 
 export interface SpecificationValidator {
   validateSyntax(spec: AgentSpecification): ValidationResult;
@@ -120,8 +112,10 @@ export class SpecificationEngine implements SpecificationValidator, CodeGenerato
   private specifications: Map<string, AgentSpecification> = new Map();
   private validationRules: ValidationRule[] = [];
   private changeHistory: SpecificationChange[] = [];
+  private startTime: number;
   
   constructor() {
+    this.startTime = Date.now();
     this.initializeValidationRules();
   }
   
@@ -1115,37 +1109,36 @@ ${changes.filter(c => c.impact === 'critical').map(c => `- ${c.description}`).jo
 
   // Generic event payload data - contains the event information
   async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
-    this.emitTrace({
-      timestamp: new Date(),
-      eventType,
-      payload,
-      metadata: {}
-    });
-    
     switch (eventType) {
-      case 'specification.create':
-        if (this.isAgentSpecification(payload)) {
-          await this.handleSpecificationCreation(payload);
-        }
+      case 'specification.validate':
+        await this.handleSpecificationValidation(payload as unknown as { specification: AgentSpecification });
         break;
-      case 'specification.update':
-        if (this.isAgentSpecification(payload)) {
-          await this.handleSpecificationUpdate(payload);
-        }
+      case 'code.generate':
+        await this.handleCodeGeneration(payload as unknown as { specification: AgentSpecification });
         break;
-      case 'specification.delete':
-        if (this.isSpecificationPayload(payload)) {
-          await this.handleSpecificationDeletion(payload);
-        }
+      case 'change.control':
+        await this.handleChangeControl(payload as unknown as { change: SpecificationChange });
         break;
-      case 'specification.change':
-        if (this.isSpecificationChange(payload)) {
-          await this.handleSpecificationChange(payload);
-        }
+      case 'generate_specifications':
+        await this.handleGenerateSpecifications(payload);
+        break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
         break;
       default:
-        await this.handleUnknownEvent(eventType, payload);
-        break;
+        await this.emitTrace({
+          timestamp: new Date(),
+          eventType: 'unknown.event.received',
+          payload: {
+            timestamp: new Date(),
+            eventType: 'error',
+            status: await this.getStatus(),
+            error: new Error(`Unknown event type: ${eventType}`),
+            correlationId: 'unknown-event',
+            sourceAgent: 'specification-engine'
+          },
+          metadata: { sourceAgent: 'specification-engine' }
+        });
     }
   }
 
@@ -1268,6 +1261,104 @@ ${changes.filter(c => c.impact === 'critical').map(c => `- ${c.description}`).jo
       } as SystemEventPayload,
       metadata: {}
     });
+  }
+
+  private async handleGenerateSpecifications(payload: EventPayload): Promise<void> {
+    // Generate specifications for software project
+    const specPayload = payload as unknown as { projectType: string; requirements?: string };
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'generate_specifications.completed',
+      payload: {
+        timestamp: new Date(),
+        projectType: specPayload.projectType,
+        requirements: specPayload.requirements || 'autonomous agent system',
+        specifications: 'Generated specifications for software project',
+        correlationId: 'generate-specifications',
+        sourceAgent: 'specification-engine'
+      },
+      metadata: { sourceAgent: 'specification-engine' }
+    });
+  }
+
+  private async handleSpecificationValidation(payload: { specification: AgentSpecification }): Promise<void> {
+    // Validate specification
+    const result = this.validateSyntax(payload.specification);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'specification.validation.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.result,
+        consensus: result.consensus,
+        correlationId: 'specification-validation',
+        sourceAgent: 'specification-engine'
+      },
+      metadata: { sourceAgent: 'specification-engine' }
+    });
+  }
+
+  private async handleCodeGeneration(payload: { specification: AgentSpecification }): Promise<void> {
+    // Generate code from specification
+    const generatedCode = this.generateAgent(payload.specification);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'code.generation.completed',
+      payload: {
+        timestamp: new Date(),
+        success: true,
+        agentClass: generatedCode.agentClass,
+        interfaces: generatedCode.interfaces,
+        tests: generatedCode.tests,
+        documentation: generatedCode.documentation,
+        correlationId: 'code-generation',
+        sourceAgent: 'specification-engine'
+      },
+      metadata: { sourceAgent: 'specification-engine' }
+    });
+  }
+
+  private async handleChangeControl(payload: { change: SpecificationChange }): Promise<void> {
+    // Handle specification change control
+    const impactAssessment = this.impactAnalysis(payload.change);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'change.control.completed',
+      payload: {
+        timestamp: new Date(),
+        changeId: payload.change.id,
+        impact: impactAssessment,
+        correlationId: 'change-control',
+        sourceAgent: 'specification-engine'
+      },
+      metadata: { sourceAgent: 'specification-engine' }
+    });
+  }
+
+  private async handleAutonomousCycle(payload: EventPayload): Promise<void> {
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'system.autonomous.cycle.completed',
+      payload: {
+        timestamp: new Date(),
+        cycleId: 'autonomous-cycle-1', // Placeholder for actual cycle ID
+        status: 'completed',
+        correlationId: 'autonomous-cycle',
+        sourceAgent: 'specification-engine'
+      },
+      metadata: { sourceAgent: 'specification-engine' }
+    });
+  }
+
+  getStatus(): AgentStatus {
+    return {
+      status: 'ready',
+      uptime: Date.now() - this.startTime
+    };
   }
 
   async shutdown(): Promise<void> {

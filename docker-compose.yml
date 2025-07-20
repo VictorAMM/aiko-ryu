@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Core AikoRyu System
+  aikoryu-core:
+    build: .
+    container_name: aikoryu-core
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - aikoryu-network
+
+  # GPU Acceleration Service
+  gpu-accelerator:
+    build: .
+    container_name: aikoryu-gpu
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0,1
+    volumes:
+      - /var/lib/nvidia-docker:/var/lib/nvidia-docker
+    depends_on:
+      - aikoryu-core
+    networks:
+      - aikoryu-network
+
+  # AI/ML Processing Service
+  ai-ml-processor:
+    build: .
+    container_name: aikoryu-ai-ml
+    environment:
+      - AI_MODEL_PATH=/app/models
+      - GPU_ENABLED=true
+    volumes:
+      - ./models:/app/models
+    depends_on:
+      - gpu-accelerator
+    networks:
+      - aikoryu-network
+
+  # Database
+  postgres:
+    image: postgres:15
+    container_name: aikoryu-db
+    environment:
+      - POSTGRES_DB=aikoryu
+      - POSTGRES_USER=aikoryu_user
+      - POSTGRES_PASSWORD=aikoryu_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - aikoryu-network
+
+  # Redis for caching and message queuing
+  redis:
+    image: redis:7-alpine
+    container_name: aikoryu-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aikoryu-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aikoryu-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - aikoryu-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aikoryu-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=aikoryu_admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - aikoryu-network
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: aikoryu-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - aikoryu-network
+
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: aikoryu-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - aikoryu-core
+    networks:
+      - aikoryu-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  aikoryu-network:
+    driver: bridge 

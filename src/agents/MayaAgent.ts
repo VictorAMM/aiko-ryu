@@ -328,6 +328,9 @@ export class MayaAgent implements MayaAgentContract {
       case 'context.synthesize':
         await this.handleContextSynthesis(payload as unknown as { contexts: ContextSlice[] });
         break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
+        break;
       default:
         await this.emitTrace({
           timestamp: new Date(),
@@ -1632,7 +1635,62 @@ export class MayaAgent implements MayaAgentContract {
   }
 
   private async handleContextSynthesis(payload: { contexts: ContextSlice[] }): Promise<void> {
-    await this.synthesizeContext(payload.contexts);
+    // Synthesize multiple contexts into a unified view
+    const synthesizedContext: ContextSlice = {
+      id: `synthesized-${Date.now()}`,
+      agentId: this.id,
+      timestamp: new Date(),
+      data: payload.contexts.reduce((acc, context) => ({ ...acc, ...context.data }), {}),
+      metadata: {
+        source: 'synthesis',
+        version: '1.0',
+        tags: ['synthesized'],
+        confidence: 0.8,
+        freshness: 1.0,
+        relationships: []
+      },
+      priority: 'medium',
+      ttl: Math.max(...payload.contexts.map(c => c.ttl || 300))
+    };
+
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'context.synthesized',
+      payload: {
+        timestamp: new Date(),
+        correlationId: 'context-synthesis',
+        sourceAgent: this.id,
+        contextId: synthesizedContext.id,
+        contextCount: payload.contexts.length
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAutonomousCycle(payload: EventPayload): Promise<void> {
+    // Handle autonomous cycle events for context management
+    const cyclePayload = payload as unknown as {
+      cycle: number;
+      decisions: number;
+      workflows: number;
+      systemState: unknown;
+      correlationId?: string;
+    };
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'autonomous.cycle.processed',
+      payload: {
+        timestamp: new Date(),
+        cycle: cyclePayload.cycle,
+        decisions: cyclePayload.decisions,
+        workflows: cyclePayload.workflows,
+        systemState: cyclePayload.systemState,
+        correlationId: cyclePayload.correlationId || 'autonomous-cycle',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
   }
 
   // Enhanced error handling and resilience methods

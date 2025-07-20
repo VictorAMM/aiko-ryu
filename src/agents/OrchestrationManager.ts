@@ -499,7 +499,7 @@ export interface OptimizationImprovement {
 export class OrchestrationManager implements OrchestrationManagerContract {
   readonly id = 'orchestration-manager';
   readonly role = 'Orchestration Manager';
-  readonly dependencies = ['aiko', 'ryu', 'sarah', 'gpu-accelerator', 'performance-optimizer', 'neural-network-composer'];
+  readonly dependencies = ['aiko', 'ryu', 'sarah', 'gpu-accelerator', 'performance-optimizer', 'neural-network-composer', 'acceptance-criteria-agent', 'specification-fidelity-agent', 'demo-testing-agent', 'enhanced-acceptance-criteria-agent'];
   
   private communicationChannels: Map<string, CommunicationChannel>;
   private agentRegistry: Map<string, CoordinatedAgent>;

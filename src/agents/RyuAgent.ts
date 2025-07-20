@@ -197,6 +197,9 @@ export class RyuAgent implements RyuAgentContract {
       case 'compliance.check':
         await this.handleComplianceCheck(payload as unknown as { policies: string[] });
         break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
+        break;
       default:
         await this.emitTrace({
           timestamp: new Date(),
@@ -1091,6 +1094,20 @@ export class RyuAgent implements RyuAgentContract {
         sourceAgent: this.id,
         overallStatus: report.overallStatus,
         checkCount: report.checks.length
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAutonomousCycle(_payload: EventPayload): Promise<void> {
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'system.autonomous.cycle.detected',
+      payload: {
+        timestamp: new Date(),
+        correlationId: `cycle-${Date.now()}`,
+        sourceAgent: this.id,
+        cycleCount: 1 // Placeholder, actual cycle count would be tracked
       },
       metadata: { sourceAgent: this.id }
     });

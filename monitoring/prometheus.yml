@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # AikoRyu Core System
+  - job_name: 'aikoryu-core'
+    static_configs:
+      - targets: ['aikoryu-core:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # GPU Accelerator
+  - job_name: 'aikoryu-gpu'
+    static_configs:
+      - targets: ['gpu-accelerator:3001']
+    metrics_path: '/gpu-metrics'
+    scrape_interval: 5s
+
+  # AI/ML Processor
+  - job_name: 'aikoryu-ai-ml'
+    static_configs:
+      - targets: ['ai-ml-processor:3002']
+    metrics_path: '/ai-metrics'
+    scrape_interval: 10s
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Nginx
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113'] 

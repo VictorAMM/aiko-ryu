@@ -99,6 +99,12 @@ export class AikoAgent implements AgentContract {
           });
         }
         break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
+        break;
+      case 'analyze_requirements':
+        await this.handleAnalyzeRequirements(payload);
+        break;
       // Test event types - handle gracefully
       case 'large.data.event':
       case 'invalid.event':
@@ -536,21 +542,59 @@ export class AikoAgent implements AgentContract {
   }
 
   private async handleTestEvent(eventType: string, payload: EventPayload): Promise<void> {
-    // Handle test events gracefully without throwing errors
+    // Handle test events gracefully for testing purposes
     this.emitTrace({
       timestamp: new Date(),
-      eventType: 'test.event.processed',
+      eventType: 'test.event.handled',
       payload: {
-        originalEventType: eventType,
-        action: 'test-event-handled',
-        payload: payload || {},
         timestamp: new Date(),
-        correlationId: (payload && 'correlationId' in payload) ? payload.correlationId : 'test-event',
+        eventType,
+        originalPayload: payload,
+        correlationId: 'test-event',
         sourceAgent: this.id
       },
-      metadata: {
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAutonomousCycle(payload: EventPayload): Promise<void> {
+    // Handle autonomous cycle events for system monitoring
+    const cyclePayload = payload as unknown as {
+      cycle: number;
+      decisions: number;
+      workflows: number;
+      systemState: unknown;
+      correlationId?: string;
+    };
+    
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'autonomous.cycle.processed',
+      payload: {
+        timestamp: new Date(),
+        cycle: cyclePayload.cycle,
+        decisions: cyclePayload.decisions,
+        workflows: cyclePayload.workflows,
+        systemState: cyclePayload.systemState,
+        correlationId: cyclePayload.correlationId || 'autonomous-cycle',
         sourceAgent: this.id
-      }
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAnalyzeRequirements(payload: EventPayload): Promise<void> {
+    // Placeholder for analyzing requirements
+    this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'analyze_requirements.processed',
+      payload: {
+        timestamp: new Date(),
+        analysisResult: 'Requirements analysis not yet implemented',
+        correlationId: (payload && 'correlationId' in payload) ? payload.correlationId : 'analyze-requirements',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
     });
   }
 

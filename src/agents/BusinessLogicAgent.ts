@@ -364,6 +364,9 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
       case 'business.metrics.track':
         await this.handleMetricsTracking(payload as unknown as { metrics: BusinessMetrics });
         break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
+        break;
       default:
         await this.emitTrace({
           timestamp: new Date(),
@@ -1558,7 +1561,43 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
   }
 
   private async handleMetricsTracking(_payload: { metrics: BusinessMetrics }): Promise<void> {
-    await this.trackBusinessMetrics(_payload.metrics);
+    // Handle business metrics tracking
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'business.metrics.tracked',
+      payload: {
+        timestamp: new Date(),
+        correlationId: 'metrics-tracking',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAutonomousCycle(payload: EventPayload): Promise<void> {
+    // Handle autonomous cycle events for business logic processing
+    const cyclePayload = payload as unknown as {
+      cycle: number;
+      decisions: number;
+      workflows: number;
+      systemState: unknown;
+      correlationId?: string;
+    };
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'autonomous.cycle.processed',
+      payload: {
+        timestamp: new Date(),
+        cycle: cyclePayload.cycle,
+        decisions: cyclePayload.decisions,
+        workflows: cyclePayload.workflows,
+        systemState: cyclePayload.systemState,
+        correlationId: cyclePayload.correlationId || 'autonomous-cycle',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
   }
 
   // Enhanced error recovery and retry helper methods

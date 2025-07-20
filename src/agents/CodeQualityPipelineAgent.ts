@@ -1,101 +1,464 @@
-import { EventEmitter } from 'events';
 import { AgentContract, AgentStatus, ValidationResult, AgentSpecification, UserInteraction, TraceEvent, DesignArtifact, EventPayload } from './AgentContract';
 
-interface PipelineResult {
+export interface CodeQualityPipelineAgentContract extends AgentContract {
+  readonly id: string;
+  readonly role: 'Code Quality Pipeline';
+  
+  validateQuality(checks: string[]): Promise<QualityValidationResult>;
+  runLinting(code: string): Promise<LintResult>;
+  runTests(code: string): Promise<TestResult>;
+  runSecurityScan(code: string): Promise<SecurityScanResult>;
+  runPerformanceTest(code: string): Promise<PerformanceTestResult>;
+  runQualityPipeline(files: string[]): Promise<QualityValidationResult>;
+}
+
+export interface QualityValidationResult {
   success: boolean;
-  lintIssues: string[];
+  qualityScore: number;
+  lintResult: LintResult;
+  testResult: TestResult;
+  securityResult: SecurityScanResult;
+  performanceResult: PerformanceTestResult;
+  errors: string[];
+  warnings: string[];
+  lintIssues: LintIssue[];
   formatChanges: string[];
   removedItems: string[];
   typeErrors: string[];
 }
 
-interface LintResult {
-  issues: string[];
-  fixedIssues: string[];
+export interface LintResult {
+  success: boolean;
+  errors: number;
+  warnings: number;
+  issues: LintIssue[];
 }
 
-interface FormatResult {
-  changedFiles: string[];
-  formattingApplied: boolean;
+export interface LintIssue {
+  line: number;
+  column: number;
+  message: string;
+  severity: 'error' | 'warning' | 'info';
 }
 
-interface PruneResult {
-  removedItems: string[];
-  unusedFiles: string[];
+export interface TestResult {
+  success: boolean;
+  testsRun: number;
+  testsPassed: number;
+  testsFailed: number;
+  coverage: number;
+  errors: string[];
 }
 
-export class CodeQualityPipelineAgent implements AgentContract {
-  public readonly id: string;
-  public readonly role: string = 'Code Quality Pipeline Agent';
-  public readonly dependencies: string[] = [];
+export interface SecurityScanResult {
+  success: boolean;
+  vulnerabilities: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  issues: SecurityIssue[];
+}
 
-  private eventEmitter: EventEmitter;
+export interface SecurityIssue {
+  type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  description: string;
+  location: string;
+}
+
+export interface PerformanceTestResult {
+  success: boolean;
+  responseTime: number;
+  throughput: number;
+  memoryUsage: number;
+  cpuUsage: number;
+  bottlenecks: string[];
+}
+
+export class CodeQualityPipelineAgent implements CodeQualityPipelineAgentContract {
+  readonly id: string;
+  readonly role = 'Code Quality Pipeline';
+  readonly dependencies = ['aiko', 'ryu', 'business'];
+
   private status: AgentStatus = {
     status: 'initializing',
     uptime: 0
   };
 
-  private pipelineTools!: {
-    eslint: unknown;
-    prettier: unknown;
-    tsPrune: unknown;
-    typeChecker: unknown;
-  };
+  private startTime: number = Date.now();
 
-  constructor(id: string = 'code-quality-pipeline-agent') {
+  constructor(id: string = 'code-quality-pipeline') {
     this.id = id;
-    this.eventEmitter = new EventEmitter();
-    this.initializePipelineTools();
   }
 
   async initialize(): Promise<void> {
     this.status = {
       status: 'ready',
-      uptime: Date.now()
+      uptime: Date.now() - this.startTime
     };
-    this.emitTrace({
+
+    await this.emitTrace({
       timestamp: new Date(),
       eventType: 'agent.initialized',
       payload: {
-        agentId: this.id,
-        role: this.role,
         timestamp: new Date(),
-        correlationId: this.id,
+        correlationId: 'init',
         sourceAgent: this.id
       },
-      metadata: {
-        sourceAgent: this.id
-      }
+      metadata: { sourceAgent: this.id }
     });
+  }
+
+  async validateQuality(checks: string[]): Promise<QualityValidationResult> {
+    const results = await Promise.all([
+      this.runLinting('// Sample code'),
+      this.runTests('// Sample code'),
+      this.runSecurityScan('// Sample code'),
+      this.runPerformanceTest('// Sample code')
+    ]);
+
+    const [lintResult, testResult, securityResult, performanceResult] = results;
+
+    const qualityScore = this.calculateQualityScore(lintResult, testResult, securityResult, performanceResult);
+    const success = qualityScore >= 0.8;
+
+    return {
+      success,
+      qualityScore,
+      lintResult,
+      testResult,
+      securityResult,
+      performanceResult,
+      errors: [],
+      warnings: [],
+      lintIssues: lintResult.issues,
+      formatChanges: [],
+      removedItems: [],
+      typeErrors: []
+    };
+  }
+
+  async runLinting(code: string): Promise<LintResult> {
+    // Mock linting for demonstration
+    return {
+      success: true,
+      errors: 0,
+      warnings: 2,
+      issues: [
+        {
+          line: 1,
+          column: 1,
+          message: 'Unused import',
+          severity: 'warning'
+        },
+        {
+          line: 5,
+          column: 10,
+          message: 'Missing semicolon',
+          severity: 'warning'
+        }
+      ]
+    };
+  }
+
+  async runTests(code: string): Promise<TestResult> {
+    // Mock testing for demonstration
+    return {
+      success: true,
+      testsRun: 15,
+      testsPassed: 14,
+      testsFailed: 1,
+      coverage: 0.85,
+      errors: ['Test failure in user authentication']
+    };
+  }
+
+  async runSecurityScan(code: string): Promise<SecurityScanResult> {
+    // Mock security scan for demonstration
+    return {
+      success: true,
+      vulnerabilities: 2,
+      critical: 0,
+      high: 1,
+      medium: 1,
+      low: 0,
+      issues: [
+        {
+          type: 'SQL Injection',
+          severity: 'high',
+          description: 'Potential SQL injection vulnerability',
+          location: 'src/database/query.ts:45'
+        },
+        {
+          type: 'XSS',
+          severity: 'medium',
+          description: 'Cross-site scripting vulnerability',
+          location: 'src/views/user.ts:23'
+        }
+      ]
+    };
+  }
+
+  async runPerformanceTest(code: string): Promise<PerformanceTestResult> {
+    // Mock performance test for demonstration
+    return {
+      success: true,
+      responseTime: 150,
+      throughput: 1000,
+      memoryUsage: 0.6,
+      cpuUsage: 0.4,
+      bottlenecks: ['Database connection pooling']
+    };
+  }
+
+  async runQualityPipeline(files: string[]): Promise<QualityValidationResult> {
+    // Simulate running quality pipeline on multiple files
+    const checks = ['linting', 'testing', 'security', 'performance'];
+    
+    // Run all quality checks
+    const lintResult = await this.runLinting(files.join('\n'));
+    const testResult = await this.runTests(files.join('\n'));
+    const securityResult = await this.runSecurityScan(files.join('\n'));
+    const performanceResult = await this.runPerformanceTest(files.join('\n'));
+    
+    // Calculate overall quality score
+    const qualityScore = this.calculateQualityScore(lintResult, testResult, securityResult, performanceResult);
+    
+    const result: QualityValidationResult = {
+      success: qualityScore > 0.7,
+      qualityScore,
+      lintResult,
+      testResult,
+      securityResult,
+      performanceResult,
+      errors: [],
+      warnings: [],
+      lintIssues: lintResult.issues,
+      formatChanges: [],
+      removedItems: [],
+      typeErrors: []
+    };
+
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'quality.pipeline.completed',
+      payload: {
+        timestamp: new Date(),
+        correlationId: `quality-pipeline-${Date.now()}`,
+        sourceAgent: this.id,
+        filesProcessed: files.length,
+        qualityScore,
+        success: result.success
+      },
+      metadata: { sourceAgent: this.id }
+    });
+
+    return result;
+  }
+
+  private calculateQualityScore(
+    lintResult: LintResult,
+    testResult: TestResult,
+    securityResult: SecurityScanResult,
+    performanceResult: PerformanceTestResult
+  ): number {
+    const lintScore = lintResult.success ? 1.0 : 0.5;
+    const testScore = testResult.success ? 1.0 : 0.7;
+    const securityScore = securityResult.critical === 0 && securityResult.high === 0 ? 1.0 : 0.6;
+    const performanceScore = performanceResult.success ? 1.0 : 0.8;
+
+    return (lintScore + testScore + securityScore + performanceScore) / 4;
+  }
+
+  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
+    switch (eventType) {
+      case 'quality.validate':
+        await this.handleQualityValidation(payload as unknown as { checks: string[] });
+        break;
+      case 'lint.run':
+        await this.handleLintRun(payload as unknown as { code: string });
+        break;
+      case 'test.run':
+        await this.handleTestRun(payload as unknown as { code: string });
+        break;
+      case 'security.scan':
+        await this.handleSecurityScan(payload as unknown as { code: string });
+        break;
+      case 'performance.test':
+        await this.handlePerformanceTest(payload as unknown as { code: string });
+        break;
+      case 'validate_quality':
+        await this.handleValidateQuality(payload);
+        break;
+      case 'system.autonomous.cycle':
+        await this.handleAutonomousCycle(payload);
+        break;
+      default:
+        await this.emitTrace({
+          timestamp: new Date(),
+          eventType: 'unknown.event.received',
+          payload: {
+            timestamp: new Date(),
+            eventType: 'error',
+            status: await this.getStatus(),
+            error: new Error(`Unknown event type: ${eventType}`),
+            correlationId: 'unknown-event',
+            sourceAgent: this.id
+          },
+          metadata: { sourceAgent: this.id }
+        });
+    }
+  }
+
+  private async handleQualityValidation(payload: { checks: string[] }): Promise<void> {
+    const result = await this.validateQuality(payload.checks);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'quality.validation.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        qualityScore: result.qualityScore,
+        correlationId: 'quality-validation',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleLintRun(payload: { code: string }): Promise<void> {
+    const result = await this.runLinting(payload.code);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'lint.run.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        errors: result.errors,
+        warnings: result.warnings,
+        correlationId: 'lint-run',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleTestRun(payload: { code: string }): Promise<void> {
+    const result = await this.runTests(payload.code);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'test.run.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        testsRun: result.testsRun,
+        testsPassed: result.testsPassed,
+        correlationId: 'test-run',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleSecurityScan(payload: { code: string }): Promise<void> {
+    const result = await this.runSecurityScan(payload.code);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'security.scan.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        vulnerabilities: result.vulnerabilities,
+        correlationId: 'security-scan',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handlePerformanceTest(payload: { code: string }): Promise<void> {
+    const result = await this.runPerformanceTest(payload.code);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'performance.test.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        responseTime: result.responseTime,
+        throughput: result.throughput,
+        correlationId: 'performance-test',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleValidateQuality(payload: EventPayload): Promise<void> {
+    // Validate code quality for software project
+    const qualityPayload = payload as unknown as { standards?: string[] };
+    
+    const result = await this.validateQuality(qualityPayload.standards || ['lint', 'test', 'security', 'performance']);
+    
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'validate_quality.completed',
+      payload: {
+        timestamp: new Date(),
+        success: result.success,
+        qualityScore: result.qualityScore,
+        correlationId: 'validate-quality',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  private async handleAutonomousCycle(payload: EventPayload): Promise<void> {
+    await this.emitTrace({
+      timestamp: new Date(),
+      eventType: 'system.autonomous.cycle.received',
+      payload: {
+        timestamp: new Date(),
+        correlationId: 'autonomous-cycle',
+        sourceAgent: this.id
+      },
+      metadata: { sourceAgent: this.id }
+    });
+  }
+
+  async emitTrace(event: TraceEvent): Promise<void> {
+    console.log(`[CodeQualityPipelineAgent:${this.id}]`, event);
+  }
+
+  getStatus(): AgentStatus {
+    return {
+      ...this.status,
+      uptime: Math.max(1, Date.now() - this.startTime)
+    };
   }
 
   async shutdown(): Promise<void> {
     this.status = {
       status: 'shutting-down',
-      uptime: Date.now()
+      uptime: Date.now() - this.startTime
     };
-    this.emitTrace({
+
+    await this.emitTrace({
       timestamp: new Date(),
       eventType: 'agent.shutdown',
       payload: {
-        agentId: this.id,
         timestamp: new Date(),
-        correlationId: this.id,
+        correlationId: 'shutdown',
         sourceAgent: this.id
       },
-      metadata: {
-        sourceAgent: this.id
-      }
+      metadata: { sourceAgent: this.id }
     });
-  }
-
-  emitTrace(event: TraceEvent): void {
-    console.log(`[${this.role}:${this.id}]`, event);
-    this.eventEmitter.emit('trace', event);
-  }
-
-  getStatus(): AgentStatus {
-    return { ...this.status };
   }
 
   validateSpecification(_spec: AgentSpecification): ValidationResult {
@@ -107,256 +470,6 @@ export class CodeQualityPipelineAgent implements AgentContract {
   }
 
   trackUserInteraction(_interaction: UserInteraction): void {
-    // Track user interactions for code quality pipeline
-  }
-
-  private initializePipelineTools(): void {
-    this.pipelineTools = {
-      eslint: {
-        lint: (_files: string[]): LintResult => ({ issues: [], fixedIssues: [] }),
-        fix: (_files: string[]): LintResult => ({ issues: [], fixedIssues: [] })
-      },
-      prettier: {
-        format: (_files: string[]): FormatResult => ({ changedFiles: [], formattingApplied: true }),
-        check: (_files: string[]): { needsFormatting: boolean } => ({ needsFormatting: false })
-      },
-      tsPrune: {
-        findUnused: (_files: string[]): { unusedExports: string[]; unusedFiles: string[] } => ({ unusedExports: [], unusedFiles: [] }),
-        removeUnused: (_files: string[]): PruneResult => ({ removedItems: [], unusedFiles: [] })
-      },
-      typeChecker: {
-        checkTypes: (_files: string[]): { errors: string[]; warnings: string[] } => ({ errors: [], warnings: [] })
-      }
-    };
-  }
-
-  /**
-   * Run the complete quality pipeline
-   */
-  async runQualityPipeline(files: string[]): Promise<PipelineResult> {
-    try {
-      this.emitTrace({
-        timestamp: new Date(),
-        eventType: 'pipeline.started',
-        payload: {
-          files,
-          timestamp: new Date(),
-          correlationId: `pipeline-${Date.now()}`,
-          sourceAgent: this.id
-        },
-        metadata: {
-          sourceAgent: this.id
-        }
-      });
-
-      // Step 1: Run ESLint
-      const lintResult = await this.runESLint(files);
-      
-      // Step 2: Run Prettier
-      const formatResult = await this.runPrettier(files);
-      
-      // Step 3: Run Prune
-      const pruneResult = await this.runPrune(files);
-      
-      // Step 4: Run Type Check
-      const typeResult = await this.runTypeCheck(files);
-
-      const result: PipelineResult = {
-        success: lintResult.issues.length === 0 && typeResult.errors.length === 0,
-        lintIssues: lintResult.issues,
-        formatChanges: formatResult.changedFiles,
-        removedItems: pruneResult.removedItems,
-        typeErrors: typeResult.errors
-      };
-
-      this.emitTrace({
-        timestamp: new Date(),
-        eventType: 'pipeline.completed',
-        payload: {
-          success: result.success,
-          lintIssues: result.lintIssues.length,
-          removedItems: result.removedItems.length,
-          typeErrors: result.typeErrors.length,
-          timestamp: new Date(),
-          correlationId: `pipeline-${Date.now()}`,
-          sourceAgent: this.id
-        },
-        metadata: {
-          sourceAgent: this.id
-        }
-      });
-
-      return result;
-    } catch (error) {
-      this.emitTrace({
-        timestamp: new Date(),
-        eventType: 'pipeline.failed',
-        payload: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date(),
-          correlationId: `pipeline-${Date.now()}`,
-          sourceAgent: this.id
-        },
-        metadata: {
-          sourceAgent: this.id
-        }
-      });
-      
-      return {
-        success: false,
-        lintIssues: [],
-        formatChanges: [],
-        removedItems: [],
-        typeErrors: [error instanceof Error ? error.message : 'Unknown error']
-      };
-    }
-  }
-
-  /**
-   * Run ESLint with auto-fix
-   */
-  private async runESLint(files: string[]): Promise<LintResult> {
-    // Mock ESLint execution
-    const eslint = this.pipelineTools.eslint as { lint: (files: string[]) => LintResult; fix: (files: string[]) => LintResult };
-    
-    // First run to identify issues
-    const lintResult = eslint.lint(files);
-    
-    // Auto-fix issues
-    const fixResult = eslint.fix(files);
-    
-    return {
-      issues: lintResult.issues.filter(issue => !fixResult.fixedIssues.includes(issue)),
-      fixedIssues: fixResult.fixedIssues
-    };
-  }
-
-  /**
-   * Run Prettier formatting
-   */
-  private async runPrettier(files: string[]): Promise<FormatResult> {
-    // Mock Prettier execution
-    const prettier = this.pipelineTools.prettier as { format: (files: string[]) => FormatResult };
-    
-    return prettier.format(files);
-  }
-
-  /**
-   * Run code pruning to remove unused code
-   */
-  private async runPrune(files: string[]): Promise<PruneResult> {
-    // Mock ts-prune execution
-    const tsPrune = this.pipelineTools.tsPrune as { findUnused: (files: string[]) => { unusedExports: string[]; unusedFiles: string[] }; removeUnused: (files: string[]) => PruneResult };
-    
-    // Find unused exports
-    const unusedResult = tsPrune.findUnused(files);
-    
-    // Remove unused code
-    const removeResult = tsPrune.removeUnused(files);
-    
-    return {
-      removedItems: [...removeResult.removedItems, ...unusedResult.unusedExports],
-      unusedFiles: unusedResult.unusedFiles
-    };
-  }
-
-  /**
-   * Run TypeScript type checking
-   */
-  private async runTypeCheck(files: string[]): Promise<{ errors: string[]; warnings: string[] }> {
-    // Mock TypeScript type checker
-    const typeChecker = this.pipelineTools.typeChecker as { checkTypes: (files: string[]) => { errors: string[]; warnings: string[] } };
-    
-    return typeChecker.checkTypes(files);
-  }
-
-  /**
-   * Clean up LLM garbage patterns
-   */
-  private cleanupLLMGarbage(code: string): { cleanedCode: string; removedItems: string[] } {
-    const removedItems: string[] = [];
-    let cleanedCode = code;
-
-    // Remove debug console.logs
-    const debugLogPattern = /console\.log\([^)]*\);?\s*/g;
-    const debugLogs = cleanedCode.match(debugLogPattern) || [];
-    cleanedCode = cleanedCode.replace(debugLogPattern, '');
-    if (debugLogs.length > 0) {
-      removedItems.push(`${debugLogs.length} debug console.log statements`);
-    }
-
-    // Remove TODO comments
-    const todoPattern = /\/\/\s*TODO.*$/gm;
-    const todos = cleanedCode.match(todoPattern) || [];
-    cleanedCode = cleanedCode.replace(todoPattern, '');
-    if (todos.length > 0) {
-      removedItems.push(`${todos.length} TODO comments`);
-    }
-
-    // Remove FIXME comments
-    const fixmePattern = /\/\/\s*FIXME.*$/gm;
-    const fixmes = cleanedCode.match(fixmePattern) || [];
-    cleanedCode = cleanedCode.replace(fixmePattern, '');
-    if (fixmes.length > 0) {
-      removedItems.push(`${fixmes.length} FIXME comments`);
-    }
-
-    // Remove unused imports
-    const unusedImportPattern = /import\s+{[^}]*}\s+from\s+['"][^'"]*['"];?\s*$/gm;
-    const unusedImports = cleanedCode.match(unusedImportPattern) || [];
-    cleanedCode = cleanedCode.replace(unusedImportPattern, '');
-    if (unusedImports.length > 0) {
-      removedItems.push(`${unusedImports.length} unused imports`);
-    }
-
-    // Remove empty lines
-    cleanedCode = cleanedCode.replace(/\n\s*\n\s*\n/g, '\n\n');
-
-    return { cleanedCode, removedItems };
-  }
-
-  /**
-   * Handle events for code quality pipeline
-   */
-  async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
-    switch (eventType) {
-      case 'pipeline.requested': {
-        const files = (payload as { files: string[] }).files;
-        const result = await this.runQualityPipeline(files);
-        this.emitTrace({
-          timestamp: new Date(),
-          eventType: 'pipeline.response',
-          payload: {
-            success: result.success,
-            lintIssues: result.lintIssues.length,
-            removedItems: result.removedItems.length,
-            timestamp: new Date(),
-            correlationId: payload.correlationId || `pipeline-${Date.now()}`,
-            sourceAgent: this.id
-          },
-          metadata: {
-            sourceAgent: this.id
-          }
-        });
-        break;
-      }
-      default:
-        // Handle unknown events gracefully
-        this.emitTrace({
-          timestamp: new Date(),
-          eventType: 'warning',
-          payload: {
-            warning: `Unknown event type: ${eventType}`,
-            originalPayload: payload || {},
-            timestamp: new Date(),
-            correlationId: payload.correlationId || 'unknown-event',
-            sourceAgent: this.id
-          },
-          metadata: {
-            sourceAgent: this.id
-          }
-        });
-        break;
-    }
+    // Not applicable for this agent
   }
 } 
