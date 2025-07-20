@@ -457,6 +457,7 @@ describe('MayaAgent - Context Manager', () => {
       await maya.initialize();
       
       const payload = {
+        id: 'test-transformation-event',
         timestamp: new Date(),
         correlationId: 'test-correlation',
         sourceAgent: 'test-agent',

@@ -113,19 +113,19 @@ export class CodeQualityPipelineAgent implements AgentContract {
   private initializePipelineTools(): void {
     this.pipelineTools = {
       eslint: {
-        lint: (files: string[]) => ({ issues: [], fixedIssues: [] }),
-        fix: (files: string[]) => ({ issues: [], fixedIssues: [] })
+        lint: (_files: string[]): LintResult => ({ issues: [], fixedIssues: [] }),
+        fix: (_files: string[]): LintResult => ({ issues: [], fixedIssues: [] })
       },
       prettier: {
-        format: (files: string[]) => ({ changedFiles: [], formattingApplied: true }),
-        check: (files: string[]) => ({ needsFormatting: false })
+        format: (_files: string[]): FormatResult => ({ changedFiles: [], formattingApplied: true }),
+        check: (_files: string[]): { needsFormatting: boolean } => ({ needsFormatting: false })
       },
       tsPrune: {
-        findUnused: (files: string[]) => ({ unusedExports: [], unusedFiles: [] }),
-        removeUnused: (files: string[]) => ({ removedItems: [], unusedFiles: [] })
+        findUnused: (_files: string[]): { unusedExports: string[]; unusedFiles: string[] } => ({ unusedExports: [], unusedFiles: [] }),
+        removeUnused: (_files: string[]): PruneResult => ({ removedItems: [], unusedFiles: [] })
       },
       typeChecker: {
-        checkTypes: (files: string[]) => ({ errors: [], warnings: [] })
+        checkTypes: (_files: string[]): { errors: string[]; warnings: string[] } => ({ errors: [], warnings: [] })
       }
     };
   }
@@ -320,7 +320,7 @@ export class CodeQualityPipelineAgent implements AgentContract {
    */
   async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     switch (eventType) {
-      case 'pipeline.requested':
+      case 'pipeline.requested': {
         const files = (payload as { files: string[] }).files;
         const result = await this.runQualityPipeline(files);
         this.emitTrace({
@@ -339,6 +339,7 @@ export class CodeQualityPipelineAgent implements AgentContract {
           }
         });
         break;
+      }
       default:
         // Handle unknown events gracefully
         this.emitTrace({

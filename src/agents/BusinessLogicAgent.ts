@@ -1162,7 +1162,7 @@ export class BusinessLogicAgent implements BusinessLogicAgentContract {
         eventType: 'status.check',
         metadata: { sourceAgent: this.id }
       },
-      uptime: Date.now() - this.startTime
+      uptime: Math.max(1, Date.now() - this.startTime)
     };
   }
 

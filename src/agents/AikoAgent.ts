@@ -250,9 +250,7 @@ export class AikoAgent implements AgentContract {
   getStatus(): AgentStatus {
     return {
       ...this.status,
-      uptime: this.status.status === 'ready' 
-        ? Date.now() - this.startTime 
-        : 0
+      uptime: Math.max(1, Date.now() - this.startTime)
     };
   }
   

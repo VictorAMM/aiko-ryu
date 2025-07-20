@@ -385,7 +385,7 @@ export class GarbageCollectorAgent implements AgentContract {
     const groups: string[][] = [];
     const visited = new Set<string>();
 
-    for (const [contextId, context] of this.registeredContexts) {
+    for (const [contextId, _context] of this.registeredContexts) {
       if (visited.has(contextId)) {
         continue;
       }
@@ -436,7 +436,7 @@ export class GarbageCollectorAgent implements AgentContract {
    */
   async handleEvent(eventType: string, payload: EventPayload): Promise<void> {
     switch (eventType) {
-      case 'context.registered':
+      case 'context.registered': {
         const registerPayload = payload as { contextId: string; size: number; dependencies: string[] };
         this.registerContext(registerPayload.contextId, {
           size: registerPayload.size,
@@ -445,13 +445,15 @@ export class GarbageCollectorAgent implements AgentContract {
           dependencies: registerPayload.dependencies
         });
         break;
+      }
 
-      case 'context.accessed':
+      case 'context.accessed': {
         const accessPayload = payload as { contextId: string };
         this.recordContextAccess(accessPayload.contextId);
         break;
+      }
 
-      case 'garbage.collection.requested':
+      case 'garbage.collection.requested': {
         const gcResult = await this.cleanupUnusedContexts();
         this.emitTrace({
           timestamp: new Date(),
@@ -469,8 +471,9 @@ export class GarbageCollectorAgent implements AgentContract {
           }
         });
         break;
+      }
 
-      case 'context.validation.requested':
+      case 'context.validation.requested': {
         const validationResult = await this.validateContextStructure();
         this.emitTrace({
           timestamp: new Date(),
@@ -488,8 +491,9 @@ export class GarbageCollectorAgent implements AgentContract {
           }
         });
         break;
+      }
 
-      case 'optimization.suggestions.requested':
+      case 'optimization.suggestions.requested': {
         const optimizations = await this.suggestOptimizations();
         this.emitTrace({
           timestamp: new Date(),
@@ -500,13 +504,14 @@ export class GarbageCollectorAgent implements AgentContract {
             splits: optimizations.splits.length,
             timestamp: new Date(),
             correlationId: payload.correlationId || `optimization-${Date.now()}`,
-            sourceAgent: this.id
+          sourceAgent: this.id
           },
           metadata: {
             sourceAgent: this.id
           }
         });
         break;
+      }
 
       default:
         // Handle unknown events gracefully

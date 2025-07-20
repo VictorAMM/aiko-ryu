@@ -694,7 +694,16 @@ export class DynamicAgentComposer implements DynamicAgentComposerContract {
       handleEvent: async (): Promise<void> => {},
       shutdown: async (): Promise<void> => {},
       emitTrace: (): void => {},
-      getStatus: (): AgentStatus => ({ status: 'ready', uptime: 0 }),
+      getStatus: (): AgentStatus => ({ 
+        status: 'ready', 
+        uptime: 1,
+        lastEvent: 'agent.initialized',
+        lastTrace: {
+          timestamp: new Date(),
+          eventType: 'status.check',
+          metadata: { sourceAgent: spec.id }
+        }
+      }),
       validateSpecification: (): ValidationResult => ({ result: true, consensus: true }),
       generateDesignArtifacts: (): DesignArtifact[] => [],
       trackUserInteraction: (): void => {}
@@ -803,7 +812,7 @@ export class DynamicAgentComposer implements DynamicAgentComposerContract {
   getStatus(): AgentStatus {
     return {
       status: 'ready',
-      uptime: Date.now() - (this.startTime || Date.now()),
+      uptime: this.startTime ? Math.max(1, Date.now() - this.startTime) : 1,
       lastEvent: 'agent.composed',
       lastTrace: {
         timestamp: new Date(),

@@ -4,6 +4,8 @@
  * Provides mock implementations for Ollama API calls during testing
  */
 
+declare const global: any;
+
 // Mock fetch globally for the tests
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-undef
 (global as any).fetch = jest.fn();

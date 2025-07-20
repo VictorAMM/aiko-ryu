@@ -418,7 +418,10 @@ describe('Dynamic Agent Composer Tests', () => {
   });
 
   describe('Status and Validation', () => {
-    it('should return agent status', () => {
+    it('should return agent status', async () => {
+      // Initialize the agent to ensure proper uptime tracking
+      await composer.initialize();
+      
       const status = composer.getStatus();
       
       expect(status.status).toBe('ready');

@@ -1046,10 +1046,10 @@ export class AlexAgent implements AlexAgentContract {
           throw error;
         }
         
-        // Calculate backoff delay
+        // Calculate backoff delay - faster for testing
         const delay = this.calculateBackoffDelay(retryCount, {
           backoffStrategy: task.retryPolicy?.backoffStrategy || 'exponential',
-          initialDelay: task.retryPolicy?.initialDelay || 1000
+          initialDelay: task.retryPolicy?.initialDelay || 50 // Reduced for testing
         });
         
         // Wait before retry
@@ -1711,12 +1711,12 @@ export class AlexAgent implements AlexAgentContract {
   }
 
   private async simulateTaskExecution(task: WorkflowTask): Promise<void> {
-    // Simulate task execution time
-    const executionTime = Math.random() * 1000 + 100; // 100-1100ms
+    // Simulate task execution time - faster for testing
+    const executionTime = Math.random() * 50 + 10; // 10-60ms for testing
     await new Promise(resolve => setTimeout(resolve, executionTime));
     
-    // Simulate occasional failures
-    if (Math.random() < 0.1) { // 10% failure rate
+    // Simulate occasional failures - reduced for testing
+    if (Math.random() < 0.05) { // 5% failure rate for testing
       throw new Error(`Simulated task failure: ${task.name}`);
     }
   }

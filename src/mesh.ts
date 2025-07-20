@@ -296,7 +296,6 @@ export class AikoRyuMesh implements MeshSystem {
         }
       }
       
-      this.status = 'error';
       console.log('[AikoRyuMesh] System shutdown completed');
     } catch (error) {
       console.error('[AikoRyuMesh] System shutdown failed:', error);
@@ -404,6 +403,18 @@ export class AikoRyuMesh implements MeshSystem {
       const routedTo: string[] = [];
       const failedRoutes: string[] = [];
       const conflicts: string[] = [];
+      
+      // Check if source agent exists (for error handling tests)
+      const sourceAgentExists = this.agents.has(sourceAgent);
+      if (!sourceAgentExists) {
+        return {
+          success: false,
+          routedTo: [],
+          failedRoutes: [sourceAgent],
+          conflicts: [],
+          timestamp: new Date()
+        };
+      }
       
       // Route event to relevant agents based on event type
       const targetAgents = this.getEventSubscribers(eventType);
