@@ -415,10 +415,10 @@ export class MayaAgent implements MayaAgentContract {
         eventType: 'context.propagation.failed',
         payload: {
           timestamp: new Date(),
-          correlationId: context.id,
+          correlationId: context?.id || 'unknown',
           sourceAgent: this.id,
           error: _error instanceof Error ? _error.message : String(_error),
-          contextId: context.id
+          contextId: context?.id || 'unknown'
         },
         metadata: { sourceAgent: this.id }
       });
@@ -428,7 +428,7 @@ export class MayaAgent implements MayaAgentContract {
       if (circuitBreakerState === 'open') {
         return {
           success: false,
-          contextId: context.id,
+          contextId: context?.id || 'unknown',
           propagatedTo: [],
           conflicts: [],
           enrichments: [],
@@ -451,7 +451,7 @@ export class MayaAgent implements MayaAgentContract {
 
       return {
         success: false,
-        contextId: context.id,
+        contextId: context?.id || 'unknown',
         propagatedTo: [],
         conflicts: [],
         enrichments: [],

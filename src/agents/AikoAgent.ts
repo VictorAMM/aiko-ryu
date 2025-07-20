@@ -395,7 +395,7 @@ export class AikoAgent implements AgentContract {
     // Validate interface semantics
     for (const iface of spec.interfaces) {
       if (!iface.name) errors.push(`Interface missing name`);
-      if (iface.methods.length === 0 && iface.events.length === 0) {
+      if ((!iface.methods || iface.methods.length === 0) && (!iface.events || iface.events.length === 0)) {
         errors.push(`Interface ${iface.name} has no methods or events`);
       }
     }
@@ -429,11 +429,11 @@ export class AikoAgent implements AgentContract {
   private validateDesignIntent(designIntent: DesignIntent): ValidationResult {
     const errors: string[] = [];
     
-    if (!designIntent.purpose) errors.push('Missing design purpose');
-    if (!designIntent.userGoals || designIntent.userGoals.length === 0) {
+    if (!designIntent || !designIntent.purpose) errors.push('Missing design purpose');
+    if (!designIntent || !designIntent.userGoals || designIntent.userGoals.length === 0) {
       errors.push('No user goals defined');
     }
-    if (!designIntent.successMetrics || designIntent.successMetrics.length === 0) {
+    if (!designIntent || !designIntent.successMetrics || designIntent.successMetrics.length === 0) {
       errors.push('No success metrics defined');
     }
     
@@ -447,7 +447,17 @@ export class AikoAgent implements AgentContract {
   private validateUserRequirements(requirements: UserRequirement[]): ValidationResult {
     const errors: string[] = [];
     
+    if (!requirements || requirements.length === 0) {
+      errors.push('No user requirements provided');
+      return {
+        result: false,
+        consensus: true,
+        reason: 'No user requirements provided'
+      };
+    }
+    
     for (const req of requirements) {
+      if (!req) continue;
       if (!req.description) errors.push(`Requirement ${req.id} missing description`);
       if (!req.userStory) errors.push(`Requirement ${req.id} missing user story`);
       if (!req.acceptanceCriteria || req.acceptanceCriteria.length === 0) {
