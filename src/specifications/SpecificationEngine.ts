@@ -706,121 +706,348 @@ await agent.handleEvent('${behavior.trigger.type}', { /* payload */ });`);
   
   // --- High-priority stub implementations ---
   private findAffectedAgents(change: SpecificationChange): string[] {
-    // Analyze the change and return a list of affected agent IDs
+    // Enhanced dependency analysis with comprehensive impact assessment
     const affected: string[] = [];
-    if (change.affectedComponents && change.affectedComponents.length > 0) {
-      affected.push(...change.affectedComponents);
-    } else if (change.target) {
-      affected.push(change.target);
-    }
-    // Simulate dependency analysis
-    for (const [id, spec] of this.specifications.entries()) {
-      if (spec.dependencies && spec.dependencies.includes(change.target)) {
-        affected.push(id);
+    
+    try {
+      // Direct component impact
+      if (change.affectedComponents && change.affectedComponents.length > 0) {
+        affected.push(...change.affectedComponents);
+      } else if (change.target) {
+        affected.push(change.target);
       }
+      
+      // Dependency graph analysis
+      for (const [id, spec] of this.specifications.entries()) {
+        if (spec.dependencies && spec.dependencies.includes(change.target)) {
+          affected.push(id);
+        }
+        
+        // Check for indirect dependencies
+        if (spec.dependencies) {
+          for (const dep of spec.dependencies) {
+            if (affected.includes(dep) && !affected.includes(id)) {
+              affected.push(id);
+            }
+          }
+        }
+      }
+      
+      // Remove duplicates and sort
+      return Array.from(new Set(affected)).sort();
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in findAffectedAgents:', error);
+      return change.target ? [change.target] : [];
     }
-    return Array.from(new Set(affected));
   }
 
   private identifyBreakingChanges(change: SpecificationChange): string[] {
-    // Detect breaking changes based on change type and impact
+    // Enhanced breaking change detection with comprehensive analysis
     const breaking: string[] = [];
-    if (change.impact === 'critical' || change.impact === 'high') {
-      breaking.push(change.target);
+    
+    try {
+      // Impact-based detection
+      if (change.impact === 'critical' || change.impact === 'high') {
+        breaking.push(change.target);
+      }
+      
+      // Type-based detection
+      if (change.type === 'remove' || change.type === 'deprecate') {
+        breaking.push(change.target);
+      }
+      
+      // Interface/contract analysis
+      if (change.description && change.description.includes('interface')) {
+        breaking.push('interface-change');
+      }
+      
+      // API signature changes
+      if (change.description && change.description.includes('signature')) {
+        breaking.push('api-signature-change');
+      }
+      
+      // Data structure changes
+      if (change.description && change.description.includes('structure')) {
+        breaking.push('data-structure-change');
+      }
+      
+      // Configuration changes
+      if (change.description && change.description.includes('config')) {
+        breaking.push('configuration-change');
+      }
+      
+      return Array.from(new Set(breaking));
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in identifyBreakingChanges:', error);
+      return change.target ? [change.target] : [];
     }
-    if (change.type === 'remove' || change.type === 'deprecate') {
-      breaking.push(change.target);
-    }
-    // Simulate interface/contract analysis
-    if (change.description && change.description.includes('interface')) {
-      breaking.push('interface-change');
-    }
-    return breaking;
   }
 
   private calculateSeverity(change: SpecificationChange): 'low' | 'medium' | 'high' | 'critical' {
-    // Calculate severity based on impact, affected components, and type
-    if (change.impact === 'critical') return 'critical';
-    if (change.impact === 'high') return 'high';
-    if (change.affectedComponents && change.affectedComponents.length > 5) return 'high';
-    if (change.type === 'remove' || change.type === 'deprecate') return 'high';
-    if (change.impact === 'medium') return 'medium';
-    return 'low';
+    // Enhanced severity calculation with comprehensive criteria
+    try {
+      // Direct impact assessment
+      if (change.impact === 'critical') return 'critical';
+      if (change.impact === 'high') return 'high';
+      
+      // Component count analysis
+      if (change.affectedComponents && change.affectedComponents.length > 5) return 'high';
+      if (change.affectedComponents && change.affectedComponents.length > 10) return 'critical';
+      
+      // Change type analysis
+      if (change.type === 'remove' || change.type === 'deprecate') return 'high';
+      
+      // Description-based analysis
+      if (change.description) {
+        const criticalKeywords = ['security', 'authentication', 'authorization', 'encryption', 'compliance'];
+        const highKeywords = ['performance', 'scalability', 'reliability', 'availability'];
+        
+        if (criticalKeywords.some(keyword => change.description.toLowerCase().includes(keyword))) {
+          return 'critical';
+        }
+        if (highKeywords.some(keyword => change.description.toLowerCase().includes(keyword))) {
+          return 'high';
+        }
+      }
+      
+      // Default severity
+      if (change.impact === 'medium') return 'medium';
+      return 'low';
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in calculateSeverity:', error);
+      return 'medium'; // Safe default
+    }
   }
 
   private estimateEffort(change: SpecificationChange): number {
-    // Estimate effort in hours based on change type and impact
-    let base = 4;
-    switch (change.type) {
-      case 'add': base = 2; break;
-      case 'modify': base = 4; break;
-      case 'remove': base = 6; break;
-      case 'deprecate': base = 3; break;
+    // Enhanced effort estimation with detailed analysis
+    try {
+      let base = 4; // Base hours
+      
+      // Type-based effort
+      switch (change.type) {
+        case 'add': base = 2; break;
+        case 'modify': base = 4; break;
+        case 'remove': base = 6; break;
+        case 'deprecate': base = 3; break;
+      }
+      
+      // Impact multiplier
+      if (change.impact === 'critical') base *= 3;
+      else if (change.impact === 'high') base *= 2;
+      else if (change.impact === 'medium') base *= 1.5;
+      
+      // Component complexity
+      if (change.affectedComponents) {
+        base += change.affectedComponents.length * 0.5;
+      }
+      
+      // Description complexity analysis
+      if (change.description) {
+        const complexityKeywords = ['integration', 'migration', 'testing', 'documentation'];
+        const complexityMultiplier = complexityKeywords.filter(keyword => 
+          change.description.toLowerCase().includes(keyword)
+        ).length * 0.5;
+        base += complexityMultiplier;
+      }
+      
+      return Math.ceil(Math.max(1, base));
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in estimateEffort:', error);
+      return 4; // Safe default
     }
-    if (change.impact === 'critical') base *= 3;
-    else if (change.impact === 'high') base *= 2;
-    else if (change.impact === 'medium') base *= 1.5;
-    if (change.affectedComponents) base += change.affectedComponents.length;
-    return Math.ceil(base);
   }
 
   private determineApprovers(change: SpecificationChange): string[] {
-    // Determine required approvers based on impact and type
+    // Enhanced approver determination with role-based analysis
     const approvers: string[] = ['tech-lead'];
-    if (change.impact === 'critical' || change.impact === 'high') {
-      approvers.push('product-owner', 'compliance-officer');
+    
+    try {
+      // Impact-based approvers
+      if (change.impact === 'critical' || change.impact === 'high') {
+        approvers.push('product-owner', 'compliance-officer');
+      }
+      
+      // Type-based approvers
+      if (change.type === 'remove' || change.type === 'deprecate') {
+        approvers.push('architect');
+      }
+      
+      // Security-related changes
+      if (change.description && change.description.toLowerCase().includes('security')) {
+        approvers.push('security-officer');
+      }
+      
+      // Performance-related changes
+      if (change.description && change.description.toLowerCase().includes('performance')) {
+        approvers.push('performance-engineer');
+      }
+      
+      // Data-related changes
+      if (change.description && change.description.toLowerCase().includes('data')) {
+        approvers.push('data-engineer');
+      }
+      
+      // Infrastructure changes
+      if (change.description && change.description.toLowerCase().includes('infrastructure')) {
+        approvers.push('devops-engineer');
+      }
+      
+      return Array.from(new Set(approvers));
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in determineApprovers:', error);
+      return ['tech-lead']; // Safe default
     }
-    if (change.type === 'remove' || change.type === 'deprecate') {
-      approvers.push('architect');
-    }
-    return Array.from(new Set(approvers));
   }
 
   private calculateTimeline(change: SpecificationChange): number {
-    // Calculate timeline in days based on effort and severity
-    const effort = this.estimateEffort(change);
-    const severity = this.calculateSeverity(change);
-    let multiplier = 1;
-    switch (severity) {
-      case 'critical': multiplier = 2; break;
-      case 'high': multiplier = 1.5; break;
-      case 'medium': multiplier = 1.2; break;
-      default: multiplier = 1;
+    // Enhanced timeline calculation with realistic estimates
+    try {
+      const effort = this.estimateEffort(change);
+      const severity = this.calculateSeverity(change);
+      
+      let multiplier = 1;
+      switch (severity) {
+        case 'critical': multiplier = 2.5; break;
+        case 'high': multiplier = 1.8; break;
+        case 'medium': multiplier = 1.3; break;
+        default: multiplier = 1;
+      }
+      
+      // Add buffer for testing and review
+      const testingBuffer = effort * 0.3;
+      const reviewBuffer = effort * 0.2;
+      
+      const totalEffort = effort * multiplier + testingBuffer + reviewBuffer;
+      
+      // Convert to days (assuming 6 productive hours per day)
+      return Math.ceil(totalEffort / 6);
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in calculateTimeline:', error);
+      return 1; // Safe default
     }
-    return Math.ceil(effort * multiplier / 4); // Assume 4 productive hours per day
   }
 
   private getPreviousVersion(target: string): string {
-    // Retrieve the previous version for a given target from change history
-    const changes = this.changeHistory.filter(c => c.target === target);
-    if (changes.length < 2) return '1.0.0';
-    // Assume versioning is sequential and simple for demo
-    return `1.0.${changes.length - 1}`;
+    // Enhanced version retrieval with proper versioning
+    try {
+      const changes = this.changeHistory.filter(c => c.target === target);
+      if (changes.length === 0) return '1.0.0';
+      if (changes.length === 1) return '1.0.1';
+      
+      // Calculate version based on change history
+      const majorChanges = changes.filter(c => c.impact === 'critical').length;
+      const minorChanges = changes.filter(c => c.impact === 'high').length;
+      const patchChanges = changes.filter(c => c.impact === 'medium' || c.impact === 'low').length;
+      
+      return `${1 + majorChanges}.${minorChanges}.${patchChanges}`;
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in getPreviousVersion:', error);
+      return '1.0.0'; // Safe default
+    }
   }
 
   private createRollbackSteps(change: SpecificationChange): RollbackStep[] {
-    // Generate rollback steps for a change
-    const steps: RollbackStep[] = [
-      { step: 1, action: `Revert ${change.type} on ${change.target}`, validation: 'validateRevert', rollbackCondition: 'if error' }
-    ];
-    if (change.type === 'add') {
-      steps.push({ step: 2, action: `Remove ${change.target}`, validation: 'validateRemoval', rollbackCondition: 'if revert fails' });
-    } else if (change.type === 'remove') {
-      steps.push({ step: 2, action: `Restore ${change.target}`, validation: 'validateRestore', rollbackCondition: 'if revert fails' });
+    // Enhanced rollback plan with comprehensive steps
+    const steps: RollbackStep[] = [];
+    
+    try {
+      // Primary rollback step
+      steps.push({
+        step: 1,
+        action: `Revert ${change.type} on ${change.target}`,
+        validation: 'validateRevert',
+        rollbackCondition: 'if error'
+      });
+      
+      // Type-specific rollback steps
+      if (change.type === 'add') {
+        steps.push({
+          step: 2,
+          action: `Remove ${change.target}`,
+          validation: 'validateRemoval',
+          rollbackCondition: 'if revert fails'
+        });
+      } else if (change.type === 'remove') {
+        steps.push({
+          step: 2,
+          action: `Restore ${change.target}`,
+          validation: 'validateRestore',
+          rollbackCondition: 'if revert fails'
+        });
+      } else if (change.type === 'modify') {
+        steps.push({
+          step: 2,
+          action: `Restore previous version of ${change.target}`,
+          validation: 'validateRestore',
+          rollbackCondition: 'if revert fails'
+        });
+      }
+      
+      // Data consistency check
+      steps.push({
+        step: steps.length + 1,
+        action: 'Verify data consistency',
+        validation: 'validateDataConsistency',
+        rollbackCondition: 'if data corruption detected'
+      });
+      
+      // System health check
+      steps.push({
+        step: steps.length + 1,
+        action: 'Verify system health',
+        validation: 'validateSystemHealth',
+        rollbackCondition: 'if system issues detected'
+      });
+      
+      return steps;
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in createRollbackSteps:', error);
+      return [{
+        step: 1,
+        action: `Emergency rollback of ${change.target}`,
+        validation: 'validateEmergencyRollback',
+        rollbackCondition: 'if any error'
+      }];
     }
-    return steps;
   }
 
   private createValidationChecks(change: SpecificationChange): string[] {
-    // Generate validation checks for a change
+    // Enhanced validation checks with comprehensive coverage
     const checks = ['syntax-check', 'semantic-check', 'completeness-check'];
-    if (change.impact === 'critical' || change.impact === 'high') {
-      checks.push('compliance-check', 'integration-check');
+    
+    try {
+      // Impact-based checks
+      if (change.impact === 'critical' || change.impact === 'high') {
+        checks.push('compliance-check', 'integration-check', 'security-check');
+      }
+      
+      // Type-based checks
+      if (change.type === 'remove' || change.type === 'deprecate') {
+        checks.push('deprecation-check', 'dependency-check');
+      }
+      
+      // Description-based checks
+      if (change.description) {
+        if (change.description.toLowerCase().includes('security')) {
+          checks.push('security-audit', 'vulnerability-scan');
+        }
+        if (change.description.toLowerCase().includes('performance')) {
+          checks.push('performance-test', 'load-test');
+        }
+        if (change.description.toLowerCase().includes('data')) {
+          checks.push('data-integrity-check', 'backup-verification');
+        }
+      }
+      
+      // Standard validation checks
+      checks.push('unit-test', 'integration-test', 'regression-test');
+      
+      return Array.from(new Set(checks));
+    } catch (error) {
+      console.error('[SpecificationEngine] Error in createValidationChecks:', error);
+      return ['syntax-check', 'semantic-check']; // Safe defaults
     }
-    if (change.type === 'remove' || change.type === 'deprecate') {
-      checks.push('deprecation-check');
-    }
-    return checks;
   }
 
   private estimateDowntime(_change: SpecificationChange): number {

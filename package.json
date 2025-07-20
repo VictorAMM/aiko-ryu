@@ -4,13 +4,19 @@
   "description": "> **README Analyzer:** > The README analyzer is a mandatory, ontology-driven tool that enforces strict alignment between project documentation (README) and the actual codebase. It acts as a compliance and progress gatekeeper, parsing the README to verify that all features, statuses, and claims accurately reflect the current implementation. The analyzer detects discrepancies, missing documentation, and semantic drift, ensuring that only validated, test-covered, and domain-aligned features are marked as complete. It must be run after every change to the codebase or documentation, and is required for CI/CD compliance. See usage instructions below. > > **Intent Certainty Evaluation:** > As a core feature, the analyzer performs intent certainty evaluation on all planned or in-progress features. This process analyzes each feature or requirement for clarity, completeness, and ontological alignment with the project's domain model. The analyzer computes a certainty score, highlights ambiguous or incomplete items, and recommends refinement steps or clarifier agents if needed. Only features with high intent certainty and clear domain grounding are allowed to progress. This ensures that all development is driven by well-defined, actionable, and contextually validated requirements, reducing rework and enforcing high-quality, autonomous agent orchestration.",
   "main": "test-readme-analyzer.js",
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "type-check": "tsc --noEmit",
     "build": "tsc",
+    "test": "jest",
     "analyze": "node build/test-readme-analyzer-optimized.js",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/ --ext .ts",
+    "lint:fix": "eslint src/ --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "start": "node build/index.js",
+    "dev": "ts-node src/index.ts",
+    "prod": "npm run build && npm run test && npm start",
+    "deploy": "npm run build && npm run test && npm run analyze && echo '✅ Production deployment ready!'",
+    "docker:build": "docker build -t aikoryu-system .",
+    "docker:run": "docker run -p 3000:3000 aikoryu-system",
+    "docker:deploy": "npm run docker:build && npm run docker:run"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "eslint": "^9.31.0",
+    "eslint-formatter-compact": "^8.40.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
