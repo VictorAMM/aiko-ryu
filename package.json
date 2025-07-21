@@ -1,12 +1,11 @@
 {
   "name": "test3",
   "version": "1.0.0",
-  "description": "> **README Analyzer:** > The README analyzer is a mandatory, ontology-driven tool that enforces strict alignment between project documentation (README) and the actual codebase. It acts as a compliance and progress gatekeeper, parsing the README to verify that all features, statuses, and claims accurately reflect the current implementation. The analyzer detects discrepancies, missing documentation, and semantic drift, ensuring that only validated, test-covered, and domain-aligned features are marked as complete. It must be run after every change to the codebase or documentation, and is required for CI/CD compliance. See usage instructions below. > > **Intent Certainty Evaluation:** > As a core feature, the analyzer performs intent certainty evaluation on all planned or in-progress features. This process analyzes each feature or requirement for clarity, completeness, and ontological alignment with the project's domain model. The analyzer computes a certainty score, highlights ambiguous or incomplete items, and recommends refinement steps or clarifier agents if needed. Only features with high intent certainty and clear domain grounding are allowed to progress. This ensures that all development is driven by well-defined, actionable, and contextually validated requirements, reducing rework and enforcing high-quality, autonomous agent orchestration.",
-  "main": "test-readme-analyzer.js",
+  "description": "",
+  "main": "",
   "scripts": {
     "build": "tsc",
     "test": "jest --timeout=30000",
-    "analyze": "node build/test-readme-analyzer-optimized.js",
     "lint": "eslint src/ --ext .ts",
     "lint:fix": "eslint src/ --ext .ts --fix",
     "type-check": "tsc --noEmit",
@@ -36,6 +35,12 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.49",
+    "@langchain/core": "^0.3.66",
+    "@langchain/openai": "^0.6.2",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "@types/jsonwebtoken": "^9.0.10",
     "cors": "^2.8.5",
     "express": "^4.18.2",
@@ -44,8 +49,8 @@
     "helmet": "^7.1.0",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.30",
     "node-fetch": "^3.3.2",
-    "zod": "^4.0.5",
-    "unknown": "^1.0.0"
+    "zod": "^4.0.5"
   }
 }

@@ -12,11 +12,14 @@ import { SarahAgent } from './agents/SarahAgent';
 import { RyuAgent } from './agents/RyuAgent';
 import { AlexAgent } from './agents/AlexAgent';
 import { MayaAgent } from './agents/MayaAgent';
+import { SystemOperationsAgent } from './agents/SystemOperationsAgent';
 import { SpecificationEngine } from './specifications/SpecificationEngine';
 import { OrchestrationManager } from './agents/OrchestrationManager';
 import { PerformanceOptimizer } from './agents/PerformanceOptimizer';
 import { NeuralNetworkComposer } from './agents/NeuralNetworkComposer';
 import { GPUAccelerator } from './agents/GPUAccelerator';
+import { IntentAgent } from './agents/IntentAgent';
+import { DevelopmentTeamAgent } from './agents/DevelopmentTeamAgent';
 
 // System configuration
 const SYSTEM_CONFIG = {
@@ -27,23 +30,35 @@ const SYSTEM_CONFIG = {
   enableStreaming: process.env.ENABLE_STREAMING === 'true'
 };
 
+// Enterprise interface
+export { AikoRyuEnterprise } from './enterprise-interface';
+
 // Agent registry
 const AGENT_REGISTRY = {
   aiko: new AikoAgent('aiko-main'),
   sarah: new SarahAgent({
     ollamaEndpoint: process.env.OLLAMA_ENDPOINT || 'http://localhost:11434',
-    defaultModel: process.env.DEFAULT_MODEL || 'qwen3',
+    defaultModel: process.env.DEFAULT_MODEL || 'gemma2:2b',
     gpuOptimization: SYSTEM_CONFIG.enableGPU
   }),
   ryu: new RyuAgent(),
   alex: new AlexAgent(),
   maya: new MayaAgent(),
+  systemOperations: new SystemOperationsAgent({
+    ollamaEndpoint: process.env.OLLAMA_ENDPOINT || 'http://localhost:11434',
+    defaultModel: process.env.DEFAULT_MODEL || 'gemma2:2b'
+  }),
   specificationEngine: new SpecificationEngine(),
   orchestrationManager: new OrchestrationManager(),
   performanceOptimizer: new PerformanceOptimizer(),
   neuralNetworkComposer: new NeuralNetworkComposer(),
-  gpuAccelerator: new GPUAccelerator()
+  gpuAccelerator: new GPUAccelerator(),
+  intent: new IntentAgent(),
+  developmentTeam: new DevelopmentTeamAgent()
 };
+
+// Enterprise orchestrator
+export { AikoRyuOrchestrator } from './agents/AikoRyuOrchestrator';
 
 /**
  * Initialize the AikoRyu system

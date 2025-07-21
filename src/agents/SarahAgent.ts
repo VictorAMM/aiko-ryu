@@ -250,7 +250,7 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
   
   private ollamaEndpoint: string;
   private defaultModel: string;
-  private model: string = 'qwen3';
+  private model: string = 'gemma2:2b';
   private loadedModels: Set<string>;
   private knowledgeBase: Map<string, Document>;
   private startTime: number;
@@ -267,7 +267,7 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
   } = {}) {
     super(); // Call EventEmitter constructor
     this.ollamaEndpoint = config.ollamaEndpoint || 'http://localhost:11434';
-    this.defaultModel = config.defaultModel || 'llama2';
+    this.defaultModel = config.defaultModel || 'qwen3:latest';
     this.loadedModels = new Set();
     this.knowledgeBase = new Map();
     this.startTime = Date.now();
@@ -441,8 +441,11 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
         }
       });
 
+      const rawText = (response.response as string) || '';
+      const cleanedText = this.cleanResponse(rawText);
+
       const result: GeneratedResponse = {
-        text: (response.response as string) || '',
+        text: cleanedText,
         confidence: this.calculateConfidence(response),
         model,
         tokens: (response.eval_count as number) || 0,
@@ -812,11 +815,32 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
       }
     });
 
+    const rawText = (response.response as string) || '';
+    const cleanedText = this.cleanResponse(rawText);
+
     return {
-      text: (response.response as string) || '',
+      text: cleanedText,
       confidence: this.calculateConfidence(response),
       tokens: (response.eval_count as number) || 0
     };
+  }
+
+  private cleanResponse(text: string): string {
+    // Remove thinking tags and their content
+    let cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+    
+    // Remove any remaining XML-like tags
+    cleaned = cleaned.replace(/<[^>]*>/g, '');
+    
+    // Clean up extra whitespace
+    cleaned = cleaned.replace(/\n\s*\n/g, '\n').trim();
+    
+    // If the response is empty after cleaning, return a fallback
+    if (!cleaned || cleaned.length < 10) {
+      return text.substring(0, 200) + '...';
+    }
+    
+    return cleaned;
   }
 
   private async callOllamaAPI(request: OllamaRequest): Promise<OllamaResponse> {
@@ -832,10 +856,37 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
         return response;
       }
 
-      // Apply GPU optimization if enabled
+      // Enhanced GPU optimization configuration
+      const gpuConfig = this.gpuOptimization ? {
+        ...this.gpuConfig,
+        num_gpu: 1,
+        num_thread: 8,
+        num_ctx: 4096,
+        temperature: 0.7,
+        top_k: 40,
+        top_p: 0.9,
+        repeat_penalty: 1.1,
+        seed: -1,
+        tfs_z: 1,
+        typical_p: 1,
+        mirostat: 0,
+        mirostat_tau: 5,
+        mirostat_eta: 0.1,
+        num_predict: -1,
+        cache_prompt: true,
+        cache_prompt_kv: true,
+        num_keep: 0,
+        repeat_last_n: 64,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        penalize_nl: true,
+        stop: [],
+        stream: false
+      } : {};
+      
       const finalOptions = {
         ...request.options,
-        ...(this.gpuOptimization ? this.gpuConfig : {})
+        ...gpuConfig
       };
 
       // Use Node.js built-in HTTP client instead of fetch
@@ -847,7 +898,8 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30 second timeout for GPU operations
       };
 
       const requestData = {
@@ -899,15 +951,17 @@ export class SarahAgent extends EventEmitter implements SarahAgentContract {
       .map(sr => `Document: ${sr.document.content}`)
       .join('\n\n');
     
-    return `Context Information:
+    return `You are a helpful AI assistant. Provide direct, clear answers without thinking out loud or using XML tags.
+
+Context Information:
 ${contextInfo}
 
 Relevant Documents:
 ${relevantDocs}
 
-Query: ${query}
+Question: ${query}
 
-Please provide a comprehensive answer based on the context and relevant documents.`;
+Answer:`;
   }
 
   private calculateRelevance(query: string, content: string): number {
